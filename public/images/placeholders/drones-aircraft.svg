@@ -1,0 +1,13 @@
+<svg viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="800" height="500" fill="#6b7444"/>
+  <rect width="800" height="500" fill="url(#grid)"/>
+  <text x="400" y="250" font-size="48" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="rgba(255,255,255,0.7)" font-family="Arial">
+    <tspan x="400" dy="0">Drones, Aircraft</tspan>
+    <tspan x="400" dy="50">&amp; Machines</tspan>
+  </text>
+</svg>

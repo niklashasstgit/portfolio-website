@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg: #0a0c10;
+  --color-bg-raised: #10141b;
+  --color-bg-raised-2: #161b24;
+  --color-line: rgba(232, 238, 246, 0.09);
+  --color-line-strong: rgba(232, 238, 246, 0.16);
+  --color-fg: #e8eef6;
+  --color-fg-muted: #93a1b5;
+  --color-fg-faint: #5b6579;
+  --color-accent: #ff6a2c;
+  --color-accent-soft: rgba(255, 106, 44, 0.14);
+  --color-accent-2: #52d9c4;
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-bg-raised: var(--color-bg-raised);
+  --color-bg-raised-2: var(--color-bg-raised-2);
+  --color-line: var(--color-line);
+  --color-fg: var(--color-fg);
+  --color-fg-muted: var(--color-fg-muted);
+  --color-fg-faint: var(--color-fg-faint);
+  --color-accent: var(--color-accent);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-accent-2: var(--color-accent-2);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #0a0c10;
+}
+
+/* thin technical scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+  border-radius: 999px;
+  border: 2px solid var(--color-bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-fg-faint);
+}
+
+/* blueprint grid backdrop, used behind hero / section backgrounds */
+.bp-grid {
+  background-image:
+    linear-gradient(var(--color-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.bp-grid-fine {
+  background-image:
+    linear-gradient(var(--color-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.font-mono-tight {
+  font-family: var(--font-geist-mono), monospace;
+  letter-spacing: 0.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
