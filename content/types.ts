@@ -24,7 +24,7 @@ export type Chapter = {
   layout?: ChapterLayout;
   tags?: string[];
   /** optional custom diagram component key, rendered instead of media */
-  diagram?: "camera-fov" | "calibration-wall" | "vtol-transition";
+  diagram?: "camera-fov" | "calibration-wall";
 };
 
 export type ProjectStatus = "flagship" | "category" | "card" | "placeholder";

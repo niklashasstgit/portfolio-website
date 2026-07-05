@@ -5,6 +5,8 @@ export const cvBasics = {
   email: "niklasblattner@gmail.com",
   linkedin: "linkedin.com/in/niklas-blattner",
   linkedinHref: "https://www.linkedin.com/in/niklas-blattner",
+  github: "github.com/niklasblattner",
+  githubHref: "https://github.com/niklasblattner",
 };
 
 export type EmploymentEntry = {
@@ -217,7 +219,7 @@ export const cvProjects: { group: string; items: CvProjectEntry[] }[] = [
         year: "2021",
         title: "Design and Implementation of a VTOL UAV with Flight Transition Optimisation",
         skills: ["CAD (CATIA)", "Flight mechanics", "Structure/propulsion/aerodynamic design"],
-        href: "/projects/drones-aircraft",
+        href: "/projects/tilt-rotor-vtol",
       },
       {
         year: "2020",
@@ -275,19 +277,16 @@ export const cvProjects: { group: string; items: CvProjectEntry[] }[] = [
         year: "2018/19",
         title: "Build and Redesigned Mostly 3D Printed CNC Machine",
         skills: ["CNC design", "CAD (Fusion 360)", "Wood and metalworking", "Laser cutting"],
-        href: "/projects/drones-aircraft",
       },
       {
         year: "from 2017",
         title: "Drone and Aircraft Design, Simulation, Testing and Manufacturing",
         skills: ["CAD (Fusion 360)", "Additive manufacturing", "Ardupilot", "RC drone and plane design"],
-        href: "/projects/drones-aircraft",
       },
       {
         year: "from 2015",
         title: "Additive Manufacturing",
         skills: ["Additive manufacturing (FDM/SLA)", "Prototyping", "Component design"],
-        href: "/projects/drones-aircraft",
       },
     ],
   },

@@ -7,8 +7,11 @@ import { projects } from "@/content/projects-index";
 const meta = projects.find((p) => p.slug === "epfl-spacecraft")!;
 
 export const metadata: Metadata = {
-  title: `${meta.title} — Niklas Blattner`,
+  title: meta.title,
   description: meta.summary,
+  keywords: meta.tags,
+  alternates: { canonical: `/projects/${meta.slug}` },
+  openGraph: { title: meta.title, description: meta.summary, url: `/projects/${meta.slug}`, images: [meta.cover] },
 };
 
 export default function Page() {
@@ -21,7 +24,7 @@ export default function Page() {
         year={meta.year}
         tags={meta.tags}
         cover={meta.cover}
-        status="placeholder"
+        status="category"
       />
       <div className="py-6 sm:py-10">
         <ScrollStory chapters={epflSpacecraftChapters} />

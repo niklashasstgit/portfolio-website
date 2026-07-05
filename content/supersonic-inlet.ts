@@ -141,7 +141,7 @@ export const supersonicInletChapters: Chapter[] = [
     media: [
       {
         type: "image",
-        src: "/images/supersonic-inlet/cfd-vs-schlieren.png",
+        src: "/images/supersonic-inlet/cfd-vs-schlieren-overlay.png",
         alt: "Overlay of CFD Mach contour (top) against a wind-tunnel schlieren image (bottom)",
         caption: "CFD (top half) overlaid on a NASA wind-tunnel schlieren image (bottom half) — shocks coincide.",
         fit: "contain",

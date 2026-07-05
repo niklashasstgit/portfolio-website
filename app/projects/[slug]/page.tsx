@@ -17,8 +17,15 @@ export async function generateMetadata({
   const project = placeholderProjects.find((p) => p.slug === slug);
   if (!project) return {};
   return {
-    title: `${project.title} — Niklas Blattner`,
+    title: project.title,
     description: project.summary,
+    keywords: project.tags,
+    alternates: { canonical: `/projects/${slug}` },
+    openGraph: {
+      title: project.title,
+      description: project.summary,
+      url: `/projects/${slug}`,
+    },
   };
 }
 

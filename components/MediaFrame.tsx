@@ -3,11 +3,11 @@ import { MediaItem } from "@/content/types";
 
 export default function MediaFrame({
   item,
-  priority = false,
+  preload = false,
   sizes = "(min-width: 1024px) 640px, 100vw",
 }: {
   item: MediaItem;
-  priority?: boolean;
+  preload?: boolean;
   sizes?: string;
 }) {
   return (
@@ -28,7 +28,7 @@ export default function MediaFrame({
             alt={item.alt}
             fill
             sizes={sizes}
-            priority={priority}
+            preload={preload}
             className={item.fit === "contain" ? "object-contain" : "object-cover"}
           />
         </div>

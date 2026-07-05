@@ -97,6 +97,18 @@ body {
   letter-spacing: 0.02em;
 }
 
+/* dev-mode debug helpers — toggled from the hidden developer console (see lib/devmode.tsx) */
+html.dev-outline * {
+  outline: 1px solid color-mix(in srgb, var(--color-accent) 45%, transparent) !important;
+  outline-offset: -1px;
+}
+html.dev-pause-anim *,
+html.dev-pause-anim *::before,
+html.dev-pause-anim *::after {
+  animation-play-state: paused !important;
+  transition: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

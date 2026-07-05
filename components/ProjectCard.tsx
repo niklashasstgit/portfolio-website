@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ProjectMeta, subsectionLabels, academicSubsectionLabels } from "@/content/types";
+import CardFeatureOverlay from "@/components/CardFeatureOverlay";
 
 function getSubsectionLabel(project: ProjectMeta): string | null {
   if (project.section === "personal" && project.subsection) {
@@ -15,9 +16,12 @@ function getSubsectionLabel(project: ProjectMeta): string | null {
 export default function ProjectCard({
   project,
   size = "md",
+  showFeatured = true,
 }: {
   project: ProjectMeta;
   size?: "lg" | "md";
+  /** Render the featured overlay (dev star toggle / "Featured" bubble). */
+  showFeatured?: boolean;
 }) {
   return (
     <Link
@@ -46,6 +50,7 @@ export default function ProjectCard({
             {getSubsectionLabel(project)}
           </span>
         )}
+        {showFeatured && <CardFeatureOverlay slug={project.slug} />}
       </div>
       <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3">

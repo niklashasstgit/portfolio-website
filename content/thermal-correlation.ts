@@ -35,12 +35,6 @@ export const thermalCorrelationChapters: Chapter[] = [
         alt: "Sentinel-2 satellite model",
         caption: "Sentinel-2 spacecraft. Image: ESA / Airbus Defence and Space.",
       },
-      {
-        type: "image",
-        src: "/images/thermal-correlation/sentinel2-block-diagram.jpg",
-        alt: "Sentinel-2 spacecraft block diagram",
-        caption: "Spacecraft subsystem block diagram. Image: ESA / Airbus Defence and Space.",
-      },
     ],
     layout: "gallery",
     tags: ["Sentinel-2", "Copernicus", "Thermal-Vacuum Test"],

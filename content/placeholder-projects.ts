@@ -13,47 +13,6 @@ export type PlaceholderProject = {
 
 export const placeholderProjects: PlaceholderProject[] = [
   {
-    slug: "lunar-lander",
-    title: "Designing Lunar Landing and Ascend Stage at Space Station Design Workshop",
-    tagline: "Systems-engineering design of a lunar lander/ascent stage during an intensive international design workshop",
-    kicker: "Academic Project · Space Station Design Workshop 2025, Stuttgart",
-    year: "2025",
-    tags: ["Matlab", "Astos", "Systems Engineering", "Synera"],
-    summary:
-      "Systems-engineering design of a lunar lander/ascent stage during an intensive international design workshop.",
-    chapters: [
-      {
-        id: "intro",
-        kicker: "01 — The Workshop",
-        title: "Space Station Design Workshop 2025, Stuttgart",
-        body: [
-          "The Space Station Design Workshop is an intensive, week-long international systems-engineering workshop where international student teams design a full space mission concept from scratch. My team's task was the lunar landing and ascent stage of a lunar mission architecture.",
-          "This page is still being filled in with the actual design results — for now, here's the team at the closing ceremony, and the shape of the work below.",
-        ],
-        layout: "gallery",
-        media: [
-          {
-            type: "image",
-            src: "/images/lunar-lander/ssdw-2025-team.jpg",
-            alt: "Space Station Design Workshop 2025 team in Stuttgart, celebrating after the closing ceremony",
-            caption: "The Space Station Design Workshop 2025 team, Stuttgart.",
-          },
-        ],
-        tags: ["SSDW 2025", "Stuttgart", "Systems Engineering"],
-      },
-      {
-        id: "lander-ascent",
-        kicker: "02 — Lander & Ascent Stage",
-        title: "Sizing the landing and ascent stage",
-        body: [
-          "Work centered on the systems-level design of the lunar landing and ascent stage: trajectory and propulsion sizing in Astos and Matlab, and integrating that with the rest of the mission architecture through Synera.",
-        ],
-        layout: "text-only",
-        tags: ["Trajectory Design", "Propulsion Sizing"],
-      },
-    ],
-  },
-  {
     slug: "pinn-optimization",
     title: "Optimization of Hybrid Algorithms to Minimize the Loss Function in PINNs",
     tagline: "University project exploring hybrid optimisation strategies for training physics-informed neural networks",
@@ -233,48 +192,117 @@ export const placeholderProjects: PlaceholderProject[] = [
     ],
   },
   {
-    slug: "airfoil-design-code",
-    title: "Developed a custom 2D airfoil design code for sub- and transonic regimes",
-    tagline: "A parametric airfoil design tool for sub- and transonic regimes, built to explore shape/performance trade-offs outside of commercial CAD",
-    kicker: "Personal Project · Software",
-    year: "2024",
-    tags: ["C++", "Aerodynamics", "Airfoil Design", "Computational Methods", "Parametric Modelling"],
+    slug: "diy-quadrotor",
+    title: "DIY Autonomous Quadrotor",
+    tagline: "First self-built Ardupilot multirotor platform with autonomous flight capabilities",
+    kicker: "Personal Project · RC",
+    year: "2018",
+    tags: ["Ardupilot", "Multirotor", "Electronics", "Flight Control"],
     summary:
-      "A parametric airfoil design tool for sub- and transonic regimes, built to explore shape/performance trade-offs outside of commercial CAD.",
+      "First complete autonomous multirotor from frame assembly to flight testing. Custom built frame with Ardupilot flight controller, calibrated compass and IMU, and autonomous mission capabilities.",
     chapters: [
       {
         id: "intro",
         kicker: "01 — Overview",
-        title: "A parametric airfoil design code, built from scratch",
+        title: "A first self-built autonomous multirotor",
         body: [
-          "A custom C++ tool for parametrically designing 2D airfoils across sub- and transonic regimes — built to explore shape/performance trade-offs directly rather than through a commercial CAD/CFD suite.",
-          "This page is still being filled in with the parametrisation method and example airfoils — for now, this is the one-line summary from the CV.",
+          "My first complete autonomous multirotor build, from frame assembly through flight testing: a custom frame, an Ardupilot flight controller, calibrated compass and IMU, and autonomous waypoint missions once the basic platform was flying reliably.",
+          "This page is still being filled in with build photos and flight footage — for now, this is the one-line summary from the CV.",
         ],
         layout: "text-only",
-        tags: ["Parametric Design", "Airfoil Aerodynamics"],
+        tags: ["Ardupilot", "First Build"],
       },
     ],
   },
   {
-    slug: "investment-platform",
-    title: "Investment Portfolio Management and Financial Analytics Platform",
-    tagline: "A Python-based platform for tracking, analysing and visualising an investment portfolio, backed by its own database layer",
-    kicker: "Personal Project · Software",
-    year: "2022/23",
-    tags: ["Python", "Data Visualization", "Portfolio Management", "Database Management"],
+    slug: "y4-multirotor",
+    title: "Y4 Coaxial Multirotor Configuration",
+    tagline: "Experimental Y4 configuration study with redundant motor pairs",
+    kicker: "Personal Project · RC",
+    year: "2021",
+    tags: ["Ardupilot", "Y4 Config", "Flight Dynamics", "CAD"],
     summary:
-      "A Python-based platform for tracking, analysing and visualising an investment portfolio, backed by its own database layer.",
+      "Exploration of the Y4 (quad plus two) configuration with coaxial motor pairs, offering redundancy and different handling characteristics compared to standard quadrotors. Ardupilot-based flight control.",
     chapters: [
       {
         id: "intro",
         kicker: "01 — Overview",
-        title: "A self-built portfolio tracking and analytics platform",
+        title: "Exploring the Y4 coaxial configuration",
         body: [
-          "A Python platform for tracking an investment portfolio, backed by its own database layer, with analytics and visualisations built on top to track performance over time.",
-          "This page is still being filled in with the architecture and dashboard views — for now, this is the one-line summary from the CV.",
+          "A build exploring the Y4 (quad-plus-two) multirotor configuration, with coaxial motor pairs on two arms trading some efficiency for motor redundancy and different yaw-authority handling compared to a standard quadrotor. Ardupilot-based flight control throughout.",
+          "This page is still being filled in with build photos and flight notes — for now, this is the one-line summary from the CV.",
         ],
         layout: "text-only",
-        tags: ["Python", "Data Visualization"],
+        tags: ["Y4 Configuration", "Coaxial Motors"],
+      },
+    ],
+  },
+  {
+    slug: "tilt-rotor-vtol",
+    title: "Tilt-Rotor VTOL Transition Platform",
+    tagline: "Electric aircraft with tilting rotors for vertical takeoff and forward flight",
+    kicker: "Personal Project · RC",
+    year: "2022 – present",
+    tags: ["VTOL", "Tilting Rotors", "Transition Flight", "Ardupilot"],
+    summary:
+      "Experimental tilt-rotor aircraft blending multirotor vertical takeoff with fixed-wing forward flight efficiency. Motorized servo-driven rotor tilt mechanism with Ardupilot transition logic.",
+    chapters: [
+      {
+        id: "intro",
+        kicker: "01 — Overview",
+        title: "Blending vertical takeoff with fixed-wing efficiency",
+        body: [
+          "An experimental tilt-rotor aircraft: multirotor vertical takeoff and landing, transitioning in flight into efficient fixed-wing forward flight via a servo-driven rotor tilt mechanism, with Ardupilot handling the transition logic.",
+          "This page is still being filled in with the transition-flight data and build details — for now, this is the one-line summary from the CV.",
+        ],
+        layout: "text-only",
+        tags: ["VTOL", "Flight Transition"],
+      },
+    ],
+  },
+  {
+    slug: "3d-printed-airframe",
+    title: "3D-Printed Composite Airframe",
+    tagline: "Lightweight RC aircraft airframe designed and additively manufactured",
+    kicker: "Personal Project · RC",
+    year: "2019",
+    tags: ["3D Printing", "Nylon Composite", "Airframe Design", "Fusion 360"],
+    summary:
+      "RC aircraft airframe designed in CAD and 3D-printed in nylon-based composite material. Emphasis on structural efficiency and rapid iteration of aerodynamic features.",
+    chapters: [
+      {
+        id: "intro",
+        kicker: "01 — Overview",
+        title: "An additively manufactured airframe",
+        body: [
+          "An RC aircraft airframe designed in CAD and 3D-printed in a nylon-based composite material, chosen to let structural and aerodynamic features iterate quickly without the lead time of traditional composite layup.",
+          "This page is still being filled in with the design iterations and print photos — for now, this is the one-line summary from the CV.",
+        ],
+        layout: "text-only",
+        tags: ["3D Printing", "Rapid Iteration"],
+      },
+    ],
+  },
+  {
+    slug: "composite-fixed-wing",
+    title: "Foam & Fiberglass Fixed-Wing Platform",
+    tagline: "Traditional composite construction with foam core and fiberglass layup",
+    kicker: "Personal Project · RC",
+    year: "2020",
+    tags: ["Composite", "Fiberglass", "Foam Core", "Hand-Laid Construction"],
+    summary:
+      "Fixed-wing aircraft constructed using conventional foam core and hand-laid fiberglass technique. Balance between light weight, durability, and ease of repair.",
+    chapters: [
+      {
+        id: "intro",
+        kicker: "01 — Overview",
+        title: "A conventional composite fixed-wing build",
+        body: [
+          "A fixed-wing RC aircraft built with a conventional foam-core-and-hand-laid-fiberglass technique, chosen for a good balance of light weight, durability, and field-repairability compared to the 3D-printed and hybrid builds.",
+          "This page is still being filled in with build photos and flight notes — for now, this is the one-line summary from the CV.",
+        ],
+        layout: "text-only",
+        tags: ["Composite Construction", "Fixed-Wing"],
       },
     ],
   },

@@ -23,8 +23,8 @@ export default function ProjectHero({
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-bg/40 to-bg" />
       {cover && (
         <div className="absolute inset-0 -z-10">
-          <Image src={cover} alt="" fill className="object-cover opacity-[0.16]" priority />
-          <div className="absolute inset-0 bg-gradient-to-b from-bg/40 via-bg/80 to-bg" />
+          <Image src={cover} alt="" fill sizes="100vw" className="object-cover opacity-[0.32]" preload />
+          <div className="absolute inset-0 bg-gradient-to-b from-bg/25 via-bg/65 to-bg" />
         </div>
       )}
       <div className="relative mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-32">

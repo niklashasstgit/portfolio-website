@@ -1,4 +1,13 @@
-import { PersonalSubsection, ProjectMeta, ProjectSection, AcademicSubsection } from "./types";
+import {
+  PersonalSubsection,
+  ProjectMeta,
+  ProjectSection,
+  AcademicSubsection,
+  sectionLabels,
+} from "./types";
+
+/** Shared fallback cover for any project without its own image yet. */
+export const GENERIC_PLACEHOLDER = "/images/placeholders/generic.svg";
 
 export const projects: ProjectMeta[] = [
   {
@@ -8,7 +17,7 @@ export const projects: ProjectMeta[] = [
     category: "Personal · Software",
     year: "2025",
     tags: ["C++", "Python", "OpenCV", "Computer Vision", "CNN"],
-    cover: "/images/placeholders/generic.svg",
+    cover: "/images/visual-sky-radar.png",
     summary:
       "A ground-based, multi-camera network that spots aircraft and contrails in the open sky, triangulates their position from two calibrated cameras, and cross-references live ADS-B traffic.",
     status: "flagship",
@@ -17,28 +26,13 @@ export const projects: ProjectMeta[] = [
     subsection: "software-projects",
   },
   {
-    slug: "drones-aircraft",
-    title: "Drones, Aircraft & Machines",
-    tagline: "RC platform builds, a VTOL UAV thesis, and a self-built CNC machine",
-    category: "Personal · RC",
-    year: "2015 – present",
-    tags: ["Fusion 360", "Ardupilot", "CAD", "Additive Manufacturing"],
-    cover: "/images/placeholders/generic.svg",
-    summary:
-      "A decade of building physical things: RC aircraft platforms flown on custom Ardupilot setups, a from-scratch VTOL UAV with flight-transition optimisation, and a redesigned 3D-printed CNC machine.",
-    status: "category",
-    href: "/projects/drones-aircraft",
-    section: "personal",
-    subsection: "rc-projects",
-  },
-  {
     slug: "thermal-correlation",
     title: "Spacecraft Thermal Correlation",
     tagline: "Automated Bayesian correlation of spacecraft thermal models — Airbus Defence and Space",
     category: "Academic · Master Thesis",
-    year: "2025 – 2026",
+    year: "2026",
     tags: ["Python", "Bayesian Inference", "Machine Learning", "Thermal"],
-    cover: "/images/placeholders/generic.svg",
+    cover: "/images/thermal-correlation/sentinel2-model.jpg",
     summary:
       "Master thesis at Airbus Defence and Space: replacing manual thermal-model tuning with a Bayesian pipeline and neural-network surrogate models, validated against real Sentinel-2 test data.",
     status: "category",
@@ -54,7 +48,7 @@ export const projects: ProjectMeta[] = [
     category: "Academic · Bachelor Thesis",
     year: "2022",
     tags: ["Python", "Supersonic Aerodynamics", "CFD (Ansys)", "Compressible Flow"],
-    cover: "/images/placeholders/generic.svg",
+    cover: "/images/supersonic-inlet/cover-hero.png",
     summary:
       "Bachelor thesis at Diehl Defence: an analytical Python tool that lays out the shock system and geometry of a supersonic inlet from a few design constraints, analyses it off-design, and is validated against Ansys CFD and a NASA wind-tunnel schlieren image.",
     status: "category",
@@ -84,11 +78,11 @@ export const projects: ProjectMeta[] = [
     tagline: "Structures pole — vibration testing & test stand design for the CHESS satellite",
     category: "Student Association",
     year: "2025",
-    tags: ["Vibration Testing", "Test Stand Design", "Structures"],
-    cover: "/images/placeholders/epfl-spacecraft.svg",
+    tags: ["Vibration Testing", "Mass Model", "Structures"],
+    cover: "/images/epfl-spacecraft/cover.png",
     summary:
-      "Structures pole member on EPFL's student spacecraft team, working on vibration test campaigns and test-stand design for the CHESS cubesat.",
-    status: "placeholder",
+      "Structures-pole member on EPFL's student spacecraft team during a five-month exchange semester: built a digital and physical mass model of the CHESS cubesat and took it through a shaker-table vibration campaign.",
+    status: "category",
     href: "/projects/epfl-spacecraft",
     section: "associations",
   },
@@ -99,7 +93,7 @@ export const projects: ProjectMeta[] = [
     category: "Student Association",
     year: "2023 – 2025",
     tags: ["Propulsion", "Composites", "Rocket Engines"],
-    cover: "/images/placeholders/hyend-rocket.svg",
+    cover: "/images/hyend-rocket/cover.png",
     summary:
       "University of Stuttgart's student rocketry team. Propulsion/structures pole: solid propellant development and testing, engine design and build, carbon-fibre tank and combustion chamber construction.",
     status: "placeholder",
@@ -112,6 +106,26 @@ export const flagshipProjects = projects.filter((p) => p.status === "flagship");
 export const categoryProjects = projects.filter((p) => p.status === "category");
 export const placeholderProjects = projects.filter((p) => p.status === "placeholder");
 
+/**
+ * Turn a free-form `year` string into a sortable number: the latest year it
+ * refers to. Handles ranges ("2023 – 2025" → 2025), split years ("2022/23" →
+ * 2023), and open-ended work ("2022 – present" → sorts newest).
+ */
+export function yearSortValue(year: string): number {
+  const y = year.toLowerCase();
+  if (/present|current|ongoing|now/.test(y)) return 9999;
+  const split = y.match(/(\d{4})\s*\/\s*(\d{2})\b/); // e.g. 2022/23
+  if (split) return 2000 + parseInt(split[2], 10);
+  const fours = y.match(/\d{4}/g);
+  if (fours && fours.length) return Math.max(...fours.map(Number));
+  return 0;
+}
+
+/** Newest first; ties keep their existing (stable) order. */
+export function sortByDate<T extends { year: string }>(list: T[]): T[] {
+  return [...list].sort((a, b) => yearSortValue(b.year) - yearSortValue(a.year));
+}
+
 export type CardProject = {
   slug: string;
   title: string;
@@ -121,7 +135,32 @@ export type CardProject = {
   section: ProjectSection;
   subsection?: PersonalSubsection;
   academicSubsection?: AcademicSubsection;
+  /** Optional own cover; falls back to the generic placeholder when absent. */
+  cover?: string;
 };
+
+/**
+ * Adapt a lighter-weight CardProject into the full ProjectMeta shape so it can
+ * be rendered by ProjectCard (with a cover image) anywhere the flagship/category
+ * projects appear.
+ */
+export function cardToMeta(c: CardProject): ProjectMeta {
+  return {
+    slug: c.slug,
+    title: c.title,
+    tagline: c.summary,
+    category: sectionLabels[c.section],
+    year: c.year,
+    tags: c.tags,
+    cover: c.cover ?? GENERIC_PLACEHOLDER,
+    summary: c.summary,
+    status: "card",
+    href: `/projects/${c.slug}`,
+    section: c.section,
+    subsection: c.subsection,
+    academicSubsection: c.academicSubsection,
+  };
+}
 
 // Lighter-weight projects pulled from the CV — each still gets its own
 // (mostly placeholder) journey page via app/projects/[slug], see
@@ -142,20 +181,72 @@ export const cardProjects: CardProject[] = [
     title: "Custom 2D Airfoil Design Code",
     year: "2024",
     summary:
-      "A parametric airfoil design tool for sub- and transonic regimes, built to explore shape/performance trade-offs outside of commercial CAD.",
-    tags: ["C++", "Aerodynamics", "Airfoil Design", "Parametric Modelling"],
+      "An inverse 2D airfoil design tool: prescribe the velocity distribution and get the geometry plus its full polar — exact potential-flow core, integral boundary-layer analysis with transition prediction, and an interactive GUI. Prototyped in Python, final version in C++.",
+    tags: ["C++", "Python", "Inverse Design", "Aerodynamics", "Boundary Layer"],
     section: "personal",
     subsection: "software-projects",
+    cover: "/images/airfoil-design-code/cover.png",
   },
   {
     slug: "investment-platform",
     title: "Investment Portfolio Management & Financial Analytics Platform",
     year: "2022/23",
     summary:
-      "A Python-based platform for tracking, analysing and visualising an investment portfolio, backed by its own database layer.",
-    tags: ["Python", "Data Visualization", "Portfolio Management"],
+      "A local-first Python platform that turns raw broker statement exports into a queryable portfolio database — with interactive charts, benchmark comparison against MSCI World, and performance, risk and allocation analytics.",
+    tags: ["Python", "SQLite", "Financial Analytics", "Data Visualization", "Portfolio Management"],
     section: "personal",
     subsection: "software-projects",
+    cover: "/images/investment-platform/cover.png",
+  },
+  {
+    slug: "diy-quadrotor",
+    title: "DIY Autonomous Quadrotor",
+    year: "2018",
+    summary:
+      "First complete autonomous multirotor from frame assembly to flight testing. Custom built frame with Ardupilot flight controller, calibrated compass and IMU, and autonomous mission capabilities.",
+    tags: ["Ardupilot", "Multirotor", "Electronics", "Flight Control"],
+    section: "personal",
+    subsection: "rc-projects",
+  },
+  {
+    slug: "y4-multirotor",
+    title: "Y4 Coaxial Multirotor Configuration",
+    year: "2021",
+    summary:
+      "Exploration of the Y4 (quad plus two) configuration with coaxial motor pairs, offering redundancy and different handling characteristics compared to standard quadrotors. Ardupilot-based flight control.",
+    tags: ["Ardupilot", "Y4 Config", "Flight Dynamics", "CAD"],
+    section: "personal",
+    subsection: "rc-projects",
+  },
+  {
+    slug: "tilt-rotor-vtol",
+    title: "Tilt-Rotor VTOL Transition Platform",
+    year: "2021",
+    summary:
+      "Experimental tilt-rotor aircraft blending multirotor vertical takeoff with fixed-wing forward flight efficiency. Motorized servo-driven rotor tilt mechanism with Ardupilot transition logic.",
+    tags: ["VTOL", "Tilting Rotors", "Transition Flight", "Ardupilot"],
+    section: "personal",
+    subsection: "rc-projects",
+  },
+  {
+    slug: "3d-printed-airframe",
+    title: "3D-Printed Composite Airframe",
+    year: "2019",
+    summary:
+      "RC aircraft airframe designed in CAD and 3D-printed in nylon-based composite material. Emphasis on structural efficiency and rapid iteration of aerodynamic features.",
+    tags: ["3D Printing", "Nylon Composite", "Airframe Design", "Fusion 360"],
+    section: "personal",
+    subsection: "rc-projects",
+  },
+  {
+    slug: "composite-fixed-wing",
+    title: "Foam & Fiberglass Fixed-Wing Platform",
+    year: "2020",
+    summary:
+      "Fixed-wing aircraft constructed using conventional foam core and hand-laid fiberglass technique. Balance between light weight, durability, and ease of repair.",
+    tags: ["Composite", "Fiberglass", "Foam Core", "Hand-Laid Construction"],
+    section: "personal",
+    subsection: "rc-projects",
   },
   {
     slug: "smart-mirror",
@@ -187,13 +278,14 @@ export const cardProjects: CardProject[] = [
   },
   {
     slug: "lunar-lander",
-    title: "Designing Lunar Landing and Ascend Stage — Space Station Design Workshop",
+    title: "Designing Lunar Landing and Ascent Stage — Space Station Design Workshop 2025",
     year: "2025",
     summary:
-      "Systems-engineering design of a lunar lander/ascent stage during an intensive international design workshop.",
-    tags: ["Matlab", "Astos", "Systems Engineering", "Synera"],
+      "Propulsion & transportation lead on Team Gold's ALFHEIM lunar-base concept: the launch/transfer architecture, launcher and propellant trade studies, and the custom-designed crew and cargo landing/ascent stages for the south pole.",
+    tags: ["Propulsion", "Lander Design", "Trade Studies", "Systems Engineering"],
     section: "academic",
     academicSubsection: "masters",
+    cover: "/images/lunar-lander/cover.png",
   },
   {
     slug: "horten-h3-airfoil",

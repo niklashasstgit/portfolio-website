@@ -117,8 +117,8 @@ function CameraFrustum({
 }) {
   const height = 9;
   // half-extents of the sensor footprint at the top (rectangular aspect)
-  const hw = 6.8;
-  const hd = 5.8;
+  const hw = 7.48;  // 6.8 * 1.1
+  const hd = 6.38;  // 5.8 * 1.1
 
   const geometry = useMemo(() => {
     // 4-sided open pyramid, faces aligned to the axes, stretched to the
@@ -141,13 +141,13 @@ function CameraFrustum({
         <meshBasicMaterial
           color={color}
           transparent
-          opacity={0.09}
+          opacity={0.2}
           side={THREE.DoubleSide}
           depthWrite={false}
         />
       </mesh>
       <lineSegments geometry={edges}>
-        <lineBasicMaterial color={color} transparent opacity={0.45} depthWrite={false} />
+        <lineBasicMaterial color={color} transparent opacity={0.85} depthWrite={false} />
       </lineSegments>
       {/* ground station marker */}
       <mesh position={[0, 0.12, 0]}>
@@ -213,15 +213,22 @@ function Aircraft({
   );
 }
 
-export default function SimScene() {
+export default function SimScene({
+  cameraPosition = [14, 21, 15],
+}: {
+  cameraPosition?: [number, number, number];
+} = {}) {
   return (
     <Canvas
-      camera={{ position: [10, 7.5, 11], fov: 42 }}
+      camera={{ position: cameraPosition, fov: 42 }}
       gl={{ antialias: true, preserveDrawingBuffer: true }}
       dpr={[1, 1.75]}
     >
       <color attach="background" args={["#0a0c10"]} />
-      <fog attach="fog" args={["#0a0c10", 18, 34]} />
+      {/* fog pushed well beyond the max zoom distance (34) + scene radius so
+          zooming out never darkens the scene — the terrain texture's own
+          vignette handles the fade into the page background */}
+      <fog attach="fog" args={["#0a0c10", 60, 140]} />
 
       <ambientLight intensity={0.55} />
       <directionalLight position={[6, 10, 4]} intensity={1.1} color="#fff4e0" />
@@ -231,10 +238,10 @@ export default function SimScene() {
       <gridHelper args={[26, 26, "#2a3442", "#1a212c"]} position={[0, 0.02, 0]} />
 
       {/* rectangular camera fields of view, straight up and overlapping over
-          the shared patch of sky */}
-      <CameraFrustum position={[-2.4, 0, -1.4]} />
-      <CameraFrustum position={[2.4, 0, -2]} />
-      <CameraFrustum position={[0.2, 0, 2.4]} color="#ff6a2c" />
+          the shared patch of sky — one distinct colour per ground camera */}
+      <CameraFrustum position={[-2.4, 0, -1.4]} color="#00e5ff" />
+      <CameraFrustum position={[2.4, 0, -2]} color="#2fe36a" />
+      <CameraFrustum position={[0.2, 0, 2.4]} color="#ffd23f" />
 
       <Aircraft radius={6.5} altitude={6.2} speed={0.06} phase={0.4} />
       <Aircraft radius={4.2} altitude={7.4} speed={0.085} phase={2.6} clockwise />
@@ -245,7 +252,7 @@ export default function SimScene() {
         autoRotateSpeed={0.55}
         enablePan={false}
         minDistance={6}
-        maxDistance={22}
+        maxDistance={34}
         maxPolarAngle={Math.PI * 0.46}
         target={[0, 2.5, 0]}
       />

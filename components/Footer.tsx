@@ -9,15 +9,23 @@ export default function Footer() {
           <div>
             <p className="font-mono-tight text-sm text-fg">{cvBasics.name}</p>
             <p className="mt-1 text-sm text-fg-muted">
-              Aerospace engineer — {cvBasics.location}
+              Aerospace Engineer — {cvBasics.location}
             </p>
           </div>
-          <div className="flex flex-col gap-1 text-sm text-fg-muted sm:items-end">
-            <a href={`mailto:${cvBasics.email}`} className="hover:text-accent">
-              {cvBasics.email}
-            </a>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-fg-muted">
             <a href={`tel:${cvBasics.phone.replace(/\s/g, "")}`} className="hover:text-accent">
               {cvBasics.phone}
+            </a>
+            <a
+              href={cvBasics.githubHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-accent"
+            >
+              {cvBasics.github}
+            </a>
+            <a href={`mailto:${cvBasics.email}`} className="hover:text-accent">
+              {cvBasics.email}
             </a>
             <a
               href={cvBasics.linkedinHref}

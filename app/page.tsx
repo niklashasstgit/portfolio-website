@@ -1,24 +1,13 @@
 import Link from "next/link";
-import ProjectCard from "@/components/ProjectCard";
 import Reveal from "@/components/fx/Reveal";
 import StaticFireHero from "@/components/home/StaticFireHero";
-import { projects, cardProjects } from "@/content/projects-index";
+import CategoryRow from "@/components/home/CategoryRow";
+import { projects, cardProjects, cardToMeta, sortByDate } from "@/content/projects-index";
 import { sectionLabels, ProjectSection } from "@/content/types";
 
 const sectionOrder: ProjectSection[] = ["personal", "academic", "associations"];
 
-function parseYear(yearStr: string): number {
-  // Extract the starting year from strings like "2025", "2015 – present", "2023 – 2025"
-  const match = yearStr.match(/(\d{4})/);
-  return match ? parseInt(match[1], 10) : 0;
-}
-
 export default function Home() {
-  // Sort all projects by year (latest first)
-  const sortedProjects = [...projects].sort((a, b) => {
-    return parseYear(b.year) - parseYear(a.year);
-  });
-
   return (
     <div>
       {/* Hero — animated static-fire scene */}
@@ -46,35 +35,6 @@ export default function Home() {
         </div>
       </StaticFireHero>
 
-      {/* All Projects — Horizontal Scroll */}
-      <Reveal>
-        <section className="border-t border-line bg-bg">
-          <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
-            <div data-reveal>
-              <span className="font-mono-tight text-xs uppercase tracking-[0.25em] text-accent">
-                Latest Work
-              </span>
-              <h2 className="text-balance mt-3 max-w-xl text-3xl font-semibold text-fg sm:text-4xl">
-                Recent projects
-              </h2>
-            </div>
-            <div className="mt-8 flex overflow-x-auto gap-6 pb-4 snap-x snap-mandatory">
-              {sortedProjects.map((p) => (
-                <div
-                  key={p.slug}
-                  className="flex-shrink-0 w-80 snap-center"
-                  data-reveal
-                >
-                  <ProjectCard project={p} />
-                </div>
-              ))}
-            </div>
-            <p className="mt-6 text-sm text-fg-muted">
-              Scroll horizontally to see more • <Link href="/projects" className="text-accent hover:underline">View all projects →</Link>
-            </p>
-          </div>
-        </section>
-      </Reveal>
 
       {/* Categories */}
       <section id="projects" className="border-t border-line bg-bg-raised/40">
@@ -90,8 +50,12 @@ export default function Home() {
             </div>
           </Reveal>
           {sectionOrder.map((section) => {
-            const sectionProjects = projects.filter((p) => p.section === section);
-            const extraCount = cardProjects.filter((c) => c.section === section).length;
+            // Every project in this section — the full ones plus the lighter
+            // CV cards (adapted so they render with the placeholder cover).
+            const sectionProjects = sortByDate([
+              ...projects.filter((p) => p.section === section),
+              ...cardProjects.filter((c) => c.section === section).map(cardToMeta),
+            ]);
             if (sectionProjects.length === 0) return null;
             return (
               <Reveal key={section}>
@@ -100,22 +64,11 @@ export default function Home() {
                     {sectionLabels[section]}
                   </h3>
                   <div className="h-px flex-1 bg-line" />
-                  {extraCount > 0 && (
-                    <Link
-                      href={`/projects#${section}`}
-                      className="font-mono-tight text-xs text-fg-faint transition-colors hover:text-accent"
-                    >
-                      +{extraCount} more
-                    </Link>
-                  )}
+                  <span className="font-mono-tight text-xs text-fg-faint">
+                    {sectionProjects.length} projects
+                  </span>
                 </div>
-                <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {sectionProjects.map((p) => (
-                    <div data-reveal key={p.slug}>
-                      <ProjectCard project={p} />
-                    </div>
-                  ))}
-                </div>
+                <CategoryRow projects={sectionProjects} />
               </Reveal>
             );
           })}

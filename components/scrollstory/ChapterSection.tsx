@@ -75,7 +75,9 @@ export default function ChapterSection({
         className={
           layout === "text-only" || layout === "full-bleed"
             ? "flex flex-col gap-10"
-            : "grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14"
+            : layout === "gallery" && media.length === 2
+              ? "grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] lg:gap-14"
+              : "grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-14"
         }
       >
         <div
@@ -122,6 +124,12 @@ export default function ChapterSection({
           >
             {chapter.diagram ? (
               <DiagramSlot name={chapter.diagram} />
+            ) : layout === "gallery" && media.length === 2 ? (
+              <div className="space-y-5">
+                {media.map((m, i) => (
+                  <MediaFrame key={i} item={m} sizes="(min-width: 1024px) 900px, 100vw" />
+                ))}
+              </div>
             ) : layout === "gallery" ? (
               <div className="grid grid-cols-2 gap-3">
                 {media.map((m, i) => (
@@ -133,7 +141,7 @@ export default function ChapterSection({
             ) : (
               <div className="space-y-3">
                 {media.map((m, i) => (
-                  <MediaFrame key={i} item={m} priority={index === 0} />
+                  <MediaFrame key={i} item={m} preload={index === 0} />
                 ))}
               </div>
             )}

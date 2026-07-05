@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { projects } from "@/content/projects-index";
 import { sectionLabels, subsectionLabels, academicSubsectionLabels, ProjectSection } from "@/content/types";
+import { useDevMode } from "@/lib/devmode";
 
 const navSections: ProjectSection[] = ["personal", "academic", "associations"];
 const projectGroups = navSections.map((section) => {
@@ -54,6 +55,7 @@ const projectGroups = navSections.map((section) => {
 
 export default function Nav() {
   const pathname = usePathname();
+  const { registerLogoClick } = useDevMode();
   const [open, setOpen] = useState(false);
   const [projectsOpen, setProjectsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -87,6 +89,7 @@ export default function Nav() {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4 sm:px-8">
         <Link
           href="/"
+          onClick={registerLogoClick}
           className="font-mono-tight text-sm tracking-widest text-fg hover:text-accent transition-colors"
         >
           N. BLATTNER

@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "C:\\Users\\nikla\\OneDrive\\Dokumente\\CODE\\Website\\dev-server.cmd",
+      "runtimeArgs": [],
+      "port": 3000,
+      "autoPort": true
+    }
+  ]
+}

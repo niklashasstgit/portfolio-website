@@ -10,8 +10,15 @@ import {
 } from "@/content/cv";
 
 export const metadata: Metadata = {
-  title: "CV — Niklas Blattner",
-  description: "Full CV: employment history, education, and project list.",
+  title: "CV",
+  description:
+    "Full CV of Niklas Julian Blattner: employment history at Airbus Defence and Space and Diehl Defence, education at the University of Stuttgart and EPFL, and project list.",
+  alternates: { canonical: "/cv" },
+  openGraph: {
+    title: "CV — Niklas Blattner",
+    description: "Full CV: employment history, education, and project list.",
+    url: "/cv",
+  },
 };
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
