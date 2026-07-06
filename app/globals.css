@@ -35,12 +35,15 @@
 
 html {
   color-scheme: dark;
+  /* root font size — driven by the dev console, scales the whole rem-based site */
+  font-size: var(--font-size-base, 16px);
 }
 
 body {
   background: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  letter-spacing: var(--tracking-base, normal);
 }
 
 ::selection {
@@ -107,6 +110,23 @@ html.dev-pause-anim *::before,
 html.dev-pause-anim *::after {
   animation-play-state: paused !important;
   transition: none !important;
+}
+
+/* published "animations off" toggle — applies to every visitor (set in the layout) */
+html.site-no-anim *,
+html.site-no-anim *::before,
+html.site-no-anim *::after {
+  animation-play-state: paused !important;
+  transition: none !important;
+}
+
+/* published blueprint-grid backdrop for all visitors */
+.site-grid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
 }
 
 @media (prefers-reduced-motion: reduce) {

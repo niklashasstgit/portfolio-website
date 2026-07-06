@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local dev-console settings store (file fallback when no KV env is set)
+/.data
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

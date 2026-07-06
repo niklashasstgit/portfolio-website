@@ -55,7 +55,7 @@ const projectGroups = navSections.map((section) => {
 
 export default function Nav() {
   const pathname = usePathname();
-  const { registerLogoClick } = useDevMode();
+  const { registerLogoClick, toggles } = useDevMode();
   const [open, setOpen] = useState(false);
   const [projectsOpen, setProjectsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -156,14 +156,16 @@ export default function Nav() {
             )}
           </div>
 
-          <Link
-            href="/cv"
-            className={`text-sm transition-colors hover:text-fg ${
-              pathname === "/cv" ? "text-fg" : "text-fg-muted"
-            }`}
-          >
-            CV
-          </Link>
+          {toggles.navCv && (
+            <Link
+              href="/cv"
+              className={`text-sm transition-colors hover:text-fg ${
+                pathname === "/cv" ? "text-fg" : "text-fg-muted"
+              }`}
+            >
+              CV
+            </Link>
+          )}
         </nav>
 
         <button
@@ -207,9 +209,11 @@ export default function Nav() {
             <Link href="/projects" className="mt-2 border-t border-line px-2 py-2 font-mono-tight text-[10px] uppercase tracking-widest text-accent hover:text-fg transition-colors" onClick={() => setOpen(false)}>
               See all projects →
             </Link>
-            <Link href="/cv" className="mt-2 rounded-md px-2 py-2 text-sm text-fg-muted hover:text-fg border-t border-line">
-              CV
-            </Link>
+            {toggles.navCv && (
+              <Link href="/cv" className="mt-2 rounded-md px-2 py-2 text-sm text-fg-muted hover:text-fg border-t border-line">
+                CV
+              </Link>
+            )}
           </div>
         </div>
       )}

@@ -1,10 +1,19 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { useDevMode } from "@/lib/devmode";
+
 /**
  * Full-viewport hero around the looping static-fire video
  * (/videos/hero-static-fire.mp4, poster /images/hero/hero-poster.webp).
  * The clip is rotated slightly so the plume reads level; scrolling simply
  * continues down to the project catalog.
+ *
+ * The whole hero sits on a solid black base, and the video element itself is
+ * black, so nothing ever flashes white while the clip is still downloading —
+ * on a slow connection you see black → poster → moving footage, never a blank
+ * light box. The mp4 is encoded with a leading `moov` atom (faststart) so it
+ * starts playing before the full file arrives.
  */
 
 // the source clip's plume points ~2.4° upward; rotate clockwise to level it
@@ -12,25 +21,62 @@ const VIDEO_TILT_DEG = 2.4;
 const VIDEO_SCALE = 1.09; // hides the corners the rotation exposes
 
 export default function StaticFireHero({ children }: { children?: React.ReactNode }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const { toggles } = useDevMode();
+
+  // Some mobile browsers ignore the autoplay attribute (iOS Low Power Mode, a
+  // backgrounded tab on first paint, aggressive data savers). Nudge playback
+  // ourselves and retry when the tab becomes visible or the user first touches
+  // the screen; if it's still blocked the poster simply stays put.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const tryPlay = () => {
+      const p = video.play();
+      if (p) p.catch(() => {});
+    };
+
+    tryPlay();
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") tryPlay();
+    };
+    const onTouch = () => tryPlay();
+
+    document.addEventListener("visibilitychange", onVisible);
+    document.addEventListener("touchstart", onTouch, { once: true, passive: true });
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      document.removeEventListener("touchstart", onTouch);
+    };
+  }, []);
+
   return (
-    <section className="relative flex min-h-[100svh] flex-col overflow-hidden border-b border-line">
+    <section className="relative flex min-h-[100svh] flex-col overflow-hidden border-b border-line bg-black">
       <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_30%_45%,#151a22_0%,#0c1016_45%,#07090d_100%)]" />
 
-      {/* looping static-fire video, rotated so the plume reads level.
-          The dim overlay tames the clip's light background on the dark page —
-          drop it to ~bg-black/20 once the true black-background render is in. */}
-      <div className="absolute inset-0 overflow-hidden">
-        <video
-          autoPlay
-          muted
-          loop
-          playsInline
-          poster="/images/hero/hero-poster.webp"
-          className="absolute inset-0 h-full w-full object-cover"
-          style={{ transform: `rotate(${VIDEO_TILT_DEG}deg) scale(${VIDEO_SCALE})` }}
-        >
-          <source src="/videos/hero-static-fire.mp4" type="video/mp4" />
-        </video>
+      {/* looping static-fire video, rotated so the plume reads level. The
+          container and the <video> are both black so there is never a white
+          flash before the footage decodes. The dim overlay tames the clip's
+          light background on the dark page. */}
+      <div className="absolute inset-0 overflow-hidden bg-black">
+        {toggles.heroVideo && (
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            poster="/images/hero/hero-poster.webp"
+            className="absolute inset-0 h-full w-full bg-black object-cover"
+            style={{ transform: `rotate(${VIDEO_TILT_DEG}deg) scale(${VIDEO_SCALE})` }}
+          >
+            <source src="/videos/hero-static-fire.mp4" type="video/mp4" />
+          </video>
+        )}
         <div className="absolute inset-0 bg-black/55" />
       </div>
 

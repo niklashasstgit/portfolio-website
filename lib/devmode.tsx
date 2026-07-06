@@ -5,79 +5,54 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 import { projects } from "@/content/projects-index";
+import {
+  ACCENT_PRESETS,
+  BG_PRESETS,
+  DEFAULT_SETTINGS,
+  settingsToCssVars,
+  type BgPresetKey,
+  type SiteSettings,
+} from "@/lib/site-settings";
+import { PW_HASH, PW_SALT, sha256hex } from "@/lib/dev-auth";
 
 /**
  * Hidden developer mode.
  *
- * Entry gesture: click the "N. BLATTNER" wordmark in the nav *exactly* four
- * times, then pause for ~3s. Three-or-fewer or five-or-more clicks do nothing
- * (the logo just behaves as a normal link to the start page), so the gesture
- * is undiscoverable unless you already know it.
+ * Entry gesture: click the "N. BLATTNER" wordmark in the nav *exactly* four times,
+ * then pause ~3s. Fewer/more clicks do nothing, so it's undiscoverable unless known.
+ * Once in dev mode the fourth click drops you back out instantly.
  *
- * Exiting is *not* a secret: once you're already in dev mode, the fourth click
- * of the wordmark drops you back to normal mode instantly — no settle pause.
- * (You can also hit the Exit button in the dev panel.)
+ * Unlike the old version, settings now live **server-side** (see lib/site-settings-store.ts):
+ * a save publishes them for every visitor on every device. The dev panel edits a local
+ * *draft* for instant preview, then POSTs it to /api/site-settings on Save. The published
+ * values are injected into every page by the root layout, so ordinary visitors get the
+ * current look with no client JS and no flash.
  *
- * The password is never shipped in plaintext — only a salted SHA-256 digest is
- * embedded, and the entered value is hashed client-side (Web Crypto) and
- * compared to it. Reading the bundle reveals the salt and the digest, not the
- * password, so it can't be lifted by "just inspecting the webpage".
- *
- * Featured flags and dev-panel settings live in localStorage (there's no
- * backend); the unlocked state lives in sessionStorage so a reload keeps you in
- * dev mode for the session.
+ * `sessionStorage` keeps you unlocked (and remembers the passphrase, needed to authorize
+ * saves) for the browser session; it is cleared on exit.
  */
 
-const FEATURED_KEY = "nb.featured.v1";
 const DEV_SESSION_KEY = "nb.dev.v1";
-const SETTINGS_KEY = "nb.devsettings.v1";
-const PW_SALT = "blattner-dev::v1::";
-// salted SHA-256 of the developer password — see PW_SALT above
-const PW_HASH = "c15ba7394ef4d7d1129eaae524f994119bfa91d1db692c630a3d5d3804b39785";
+const PW_SESSION_KEY = "nb.dev.pw.v1";
 
 const REQUIRED_CLICKS = 4;
 const SETTLE_MS = 3000;
 
-async function sha256hex(message: string): Promise<string> {
-  const bytes = new TextEncoder().encode(message);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(digest)]
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-/* ------------------------------------------------------------------ */
-/* Settings                                                            */
-/* ------------------------------------------------------------------ */
-
-type BgPresetKey = "void" | "slate" | "blueprint" | "black" | "carbon";
-
-type DevSettings = {
-  /** accent colour hex, applied to --color-accent */
-  accent: string;
-  /** background palette preset */
-  bg: BgPresetKey;
-  /** blueprint grid overlay across the whole viewport */
+/** Purely local, dev-only debug overlays — never published to visitors. */
+type DebugFlags = {
   grid: boolean;
-  /** outline every element (layout debugging) */
   outline: boolean;
-  /** live FPS meter badge */
   fps: boolean;
-  /** cursor coordinate readout */
   coords: boolean;
-  /** freeze all CSS animations + transitions */
   pauseAnim: boolean;
 };
-
-const DEFAULT_ACCENT = "#ff6a2c";
-
-const DEFAULT_SETTINGS: DevSettings = {
-  accent: DEFAULT_ACCENT,
-  bg: "void",
+const DEFAULT_DEBUG: DebugFlags = {
   grid: false,
   outline: false,
   fps: false,
@@ -85,107 +60,91 @@ const DEFAULT_SETTINGS: DevSettings = {
   pauseAnim: false,
 };
 
-const ACCENT_PRESETS: { name: string; hex: string }[] = [
-  { name: "Ember", hex: "#ff6a2c" },
-  { name: "Teal", hex: "#52d9c4" },
-  { name: "Azure", hex: "#3b82f6" },
-  { name: "Violet", hex: "#a855f7" },
-  { name: "Lime", hex: "#22c55e" },
-  { name: "Rose", hex: "#f43f5e" },
-];
-
-const BG_PRESETS: Record<BgPresetKey, { name: string; bg: string; raised: string; raised2: string }> = {
-  void: { name: "Void", bg: "#0a0c10", raised: "#10141b", raised2: "#161b24" },
-  slate: { name: "Slate", bg: "#0f172a", raised: "#1e293b", raised2: "#334155" },
-  blueprint: { name: "Blueprint", bg: "#081826", raised: "#0e2338", raised2: "#143050" },
-  black: { name: "Pure Black", bg: "#000000", raised: "#0b0b0b", raised2: "#151515" },
-  carbon: { name: "Carbon", bg: "#121212", raised: "#1c1c1c", raised2: "#262626" },
-};
-
-/** 0.14 alpha ≈ 0x24 — used to derive --color-accent-soft from the accent hex */
-const SOFT_ALPHA = "24";
-
-function loadSettings(): DevSettings {
-  try {
-    const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) ?? "{}");
-    return { ...DEFAULT_SETTINGS, ...(raw && typeof raw === "object" ? raw : {}) };
-  } catch {
-    return { ...DEFAULT_SETTINGS };
-  }
-}
+/** CSS var keys we set inline while previewing — kept stable so we can clear them all. */
+const PREVIEW_VAR_KEYS = Object.keys(settingsToCssVars(DEFAULT_SETTINGS));
 
 /* ------------------------------------------------------------------ */
 /* Context                                                             */
 /* ------------------------------------------------------------------ */
 
 type DevModeValue = {
-  /** true once the client has mounted — gate localStorage-derived UI on this */
   mounted: boolean;
   isDev: boolean;
+  /** effective (draft while in dev, else published) structural toggles */
+  toggles: SiteSettings["toggles"];
+  /** effective text-content overrides */
+  content: SiteSettings["content"];
   isFeatured: (slug: string) => boolean;
   toggleFeatured: (slug: string) => void;
-  /** call on every click of the secret wordmark */
   registerLogoClick: () => void;
 };
 
 const DevModeContext = createContext<DevModeValue | null>(null);
 
-export function DevModeProvider({ children }: { children: React.ReactNode }) {
+export function DevModeProvider({
+  children,
+  initialSettings,
+}: {
+  children: React.ReactNode;
+  initialSettings: SiteSettings;
+}) {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [isDev, setIsDev] = useState(false);
-  const [featured, setFeatured] = useState<Set<string>>(new Set());
   const [loginOpen, setLoginOpen] = useState(false);
-  const [settings, setSettings] = useState<DevSettings>(DEFAULT_SETTINGS);
 
-  // hydrate persisted state after mount (never during SSR)
+  // published = last-known server state; draft = what the panel is editing.
+  const [published, setPublished] = useState<SiteSettings>(initialSettings);
+  const [draft, setDraft] = useState<SiteSettings>(initialSettings);
+  const [debug, setDebug] = useState<DebugFlags>(DEFAULT_DEBUG);
+
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [savedTick, setSavedTick] = useState(0);
+
+  // the entered passphrase, needed to authorize saves. Memory + sessionStorage only.
+  const pwRef = useRef<string | null>(null);
+
+  const dirty = useMemo(
+    () => JSON.stringify(draft) !== JSON.stringify(published),
+    [draft, published]
+  );
+
+  // hydrate session state after mount (never during SSR)
   useEffect(() => {
     setMounted(true);
     try {
-      const raw = JSON.parse(localStorage.getItem(FEATURED_KEY) ?? "[]");
-      if (Array.isArray(raw)) setFeatured(new Set(raw.filter((s) => typeof s === "string")));
-    } catch {
-      /* ignore corrupt storage */
-    }
-    try {
-      if (sessionStorage.getItem(DEV_SESSION_KEY) === "1") setIsDev(true);
+      if (sessionStorage.getItem(DEV_SESSION_KEY) === "1") {
+        setIsDev(true);
+        pwRef.current = sessionStorage.getItem(PW_SESSION_KEY);
+      }
     } catch {
       /* ignore */
     }
-    setSettings(loadSettings());
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
     try {
       if (isDev) sessionStorage.setItem(DEV_SESSION_KEY, "1");
-      else sessionStorage.removeItem(DEV_SESSION_KEY);
+      else {
+        sessionStorage.removeItem(DEV_SESSION_KEY);
+        sessionStorage.removeItem(PW_SESSION_KEY);
+      }
     } catch {
       /* ignore */
     }
   }, [isDev, mounted]);
 
-  // persist settings
-  useEffect(() => {
-    if (!mounted) return;
-    try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    } catch {
-      /* ignore */
-    }
-  }, [settings, mounted]);
-
-  // apply appearance settings to the document — only while in dev mode, and
-  // always cleaned up on exit so normal visitors see the real design.
+  // Live preview: while in dev mode, mirror the draft onto <html> as inline styles
+  // (which beat the layout's published <style>), plus debug classes. On exit we strip
+  // everything so the server-published appearance shows through untouched.
   useEffect(() => {
     if (!mounted) return;
     const root = document.documentElement;
     const clear = () => {
-      root.style.removeProperty("--color-accent");
-      root.style.removeProperty("--color-accent-soft");
-      root.style.removeProperty("--color-bg");
-      root.style.removeProperty("--color-bg-raised");
-      root.style.removeProperty("--color-bg-raised-2");
-      root.classList.remove("dev-outline", "dev-pause-anim");
+      for (const k of PREVIEW_VAR_KEYS) root.style.removeProperty(k);
+      root.classList.remove("dev-outline", "dev-pause-anim", "site-no-anim");
     };
 
     if (!isDev) {
@@ -193,62 +152,102 @@ export function DevModeProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    root.style.setProperty("--color-accent", settings.accent);
-    root.style.setProperty("--color-accent-soft", `${settings.accent}${SOFT_ALPHA}`);
-    const bg = BG_PRESETS[settings.bg] ?? BG_PRESETS.void;
-    root.style.setProperty("--color-bg", bg.bg);
-    root.style.setProperty("--color-bg-raised", bg.raised);
-    root.style.setProperty("--color-bg-raised-2", bg.raised2);
-    root.classList.toggle("dev-outline", settings.outline);
-    root.classList.toggle("dev-pause-anim", settings.pauseAnim);
+    const vars = settingsToCssVars(draft);
+    for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v);
+    root.classList.toggle("dev-outline", debug.outline);
+    root.classList.toggle("dev-pause-anim", debug.pauseAnim);
+    root.classList.toggle("site-no-anim", !draft.toggles.animations);
 
     return clear;
-  }, [isDev, settings, mounted]);
+  }, [isDev, draft, debug, mounted]);
 
-  const updateSetting = useCallback(
-    <K extends keyof DevSettings>(key: K, value: DevSettings[K]) => {
-      setSettings((prev) => ({ ...prev, [key]: value }));
-    },
+  /* ---- draft mutators ---- */
+  const setColor = useCallback((key: keyof SiteSettings["colors"], value: string) => {
+    setDraft((p) => ({ ...p, colors: { ...p.colors, [key]: value } }));
+  }, []);
+  const setBg = useCallback((bg: BgPresetKey) => setDraft((p) => ({ ...p, bg })), []);
+  const setType = useCallback(
+    (key: keyof SiteSettings["typography"], value: number) =>
+      setDraft((p) => ({ ...p, typography: { ...p.typography, [key]: value } })),
+    []
+  );
+  const setToggle = useCallback(
+    (key: keyof SiteSettings["toggles"], value: boolean) =>
+      setDraft((p) => ({ ...p, toggles: { ...p.toggles, [key]: value } })),
+    []
+  );
+  const setDebugFlag = useCallback(
+    (key: keyof DebugFlags, value: boolean) => setDebug((p) => ({ ...p, [key]: value })),
     []
   );
 
-  const resetSettings = useCallback(() => setSettings({ ...DEFAULT_SETTINGS }), []);
-
   const toggleFeatured = useCallback((slug: string) => {
-    setFeatured((prev) => {
-      const next = new Set(prev);
-      if (next.has(slug)) next.delete(slug);
-      else next.add(slug);
-      try {
-        localStorage.setItem(FEATURED_KEY, JSON.stringify([...next]));
-      } catch {
-        /* ignore */
-      }
-      return next;
+    setDraft((p) => {
+      const has = p.featured.includes(slug);
+      return {
+        ...p,
+        featured: has ? p.featured.filter((s) => s !== slug) : [...p.featured, slug],
+      };
     });
   }, []);
+  const setFeatured = useCallback(
+    (slugs: string[]) => setDraft((p) => ({ ...p, featured: slugs })),
+    []
+  );
+  const isFeatured = useCallback((slug: string) => draft.featured.includes(slug), [draft.featured]);
 
-  const setFeaturedSet = useCallback((slugs: string[]) => {
-    const next = new Set(slugs);
-    setFeatured(next);
+  const revertToPublished = useCallback(() => setDraft(published), [published]);
+  const resetToDefaults = useCallback(
+    () => setDraft({ ...DEFAULT_SETTINGS, featured: draft.featured }),
+    [draft.featured]
+  );
+
+  const save = useCallback(async () => {
+    setSaving(true);
+    setSaveError(null);
     try {
-      localStorage.setItem(FEATURED_KEY, JSON.stringify([...next]));
-    } catch {
-      /* ignore */
+      const res = await fetch("/api/site-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pwRef.current ?? "", patch: draft }),
+      });
+      if (res.status === 401) throw new Error("Auth expired — exit and re-enter dev mode.");
+      if (!res.ok) throw new Error("Save failed. Try again.");
+      const saved = (await res.json()) as SiteSettings;
+      setPublished(saved);
+      setDraft(saved);
+      setSavedTick((t) => t + 1);
+      // re-render server components so the injected <style> matches the new published state
+      router.refresh();
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Save failed.");
+    } finally {
+      setSaving(false);
     }
-  }, []);
+  }, [draft, router]);
 
-  const isFeatured = useCallback((slug: string) => featured.has(slug), [featured]);
+  const discard = useCallback(async () => {
+    try {
+      const res = await fetch("/api/site-settings", { cache: "no-store" });
+      if (res.ok) {
+        const s = (await res.json()) as SiteSettings;
+        setPublished(s);
+        setDraft(s);
+      } else {
+        revertToPublished();
+      }
+    } catch {
+      revertToPublished();
+    }
+  }, [revertToPublished]);
 
-  // --- the secret four-click gesture ---
+  /* ---- secret four-click gesture ---- */
   const clickCount = useRef(0);
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDevRef = useRef(isDev);
   isDevRef.current = isDev;
 
   const registerLogoClick = useCallback(() => {
-    // Already in dev mode → exiting is not a secret. The fourth click drops you
-    // out instantly, no settle pause.
     if (isDevRef.current) {
       clickCount.current += 1;
       if (settleTimer.current) clearTimeout(settleTimer.current);
@@ -257,14 +256,12 @@ export function DevModeProvider({ children }: { children: React.ReactNode }) {
         setIsDev(false);
         return;
       }
-      // forget a partial streak if they wander off for a bit
       settleTimer.current = setTimeout(() => {
         clickCount.current = 0;
       }, SETTLE_MS);
       return;
     }
 
-    // Not in dev mode → entry stays hidden behind exactly-four-then-pause.
     clickCount.current += 1;
     if (settleTimer.current) clearTimeout(settleTimer.current);
     settleTimer.current = setTimeout(() => {
@@ -281,27 +278,55 @@ export function DevModeProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
-  const unlock = useCallback(() => {
+  const unlock = useCallback((pw: string) => {
+    pwRef.current = pw;
+    try {
+      sessionStorage.setItem(PW_SESSION_KEY, pw);
+    } catch {
+      /* ignore */
+    }
     setIsDev(true);
     setLoginOpen(false);
   }, []);
 
+  const value = useMemo<DevModeValue>(
+    () => ({
+      mounted,
+      isDev,
+      toggles: draft.toggles,
+      content: draft.content,
+      isFeatured,
+      toggleFeatured,
+      registerLogoClick,
+    }),
+    [mounted, isDev, draft.toggles, draft.content, isFeatured, toggleFeatured, registerLogoClick]
+  );
+
   return (
-    <DevModeContext.Provider
-      value={{ mounted, isDev, isFeatured, toggleFeatured, registerLogoClick }}
-    >
+    <DevModeContext.Provider value={value}>
       {children}
       {loginOpen && <DevLogin onUnlock={unlock} onClose={() => setLoginOpen(false)} />}
       {mounted && isDev && (
         <>
-          <DevOverlays settings={settings} />
+          <DevOverlays debug={debug} />
           <DevPanel
-            settings={settings}
-            updateSetting={updateSetting}
-            resetSettings={resetSettings}
-            featuredCount={featured.size}
-            featureAll={() => setFeaturedSet(projects.map((p) => p.slug))}
-            clearFeatured={() => setFeaturedSet([])}
+            draft={draft}
+            debug={debug}
+            dirty={dirty}
+            saving={saving}
+            saveError={saveError}
+            savedTick={savedTick}
+            setColor={setColor}
+            setBg={setBg}
+            setType={setType}
+            setToggle={setToggle}
+            setDebugFlag={setDebugFlag}
+            featureAll={() => setFeatured(projects.map((p) => p.slug))}
+            clearFeatured={() => setFeatured([])}
+            onSave={save}
+            onDiscard={discard}
+            onRevert={revertToPublished}
+            onResetDefaults={resetToDefaults}
             onExit={() => setIsDev(false)}
           />
         </>
@@ -320,7 +345,13 @@ export function useDevMode(): DevModeValue {
 /* Login                                                               */
 /* ------------------------------------------------------------------ */
 
-function DevLogin({ onUnlock, onClose }: { onUnlock: () => void; onClose: () => void }) {
+function DevLogin({
+  onUnlock,
+  onClose,
+}: {
+  onUnlock: (pw: string) => void;
+  onClose: () => void;
+}) {
   const [pw, setPw] = useState("");
   const [error, setError] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -342,7 +373,7 @@ function DevLogin({ onUnlock, onClose }: { onUnlock: () => void; onClose: () => 
     const ok = (await sha256hex(PW_SALT + pw)) === PW_HASH;
     setChecking(false);
     if (ok) {
-      onUnlock();
+      onUnlock(pw);
     } else {
       setError(true);
       setPw("");
@@ -408,17 +439,14 @@ function DevLogin({ onUnlock, onClose }: { onUnlock: () => void; onClose: () => 
 /* Live overlays (grid / FPS / coordinates)                           */
 /* ------------------------------------------------------------------ */
 
-function DevOverlays({ settings }: { settings: DevSettings }) {
+function DevOverlays({ debug }: { debug: DebugFlags }) {
   return (
     <>
-      {settings.grid && (
-        <div
-          aria-hidden
-          className="bp-grid pointer-events-none fixed inset-0 z-[80] opacity-60"
-        />
+      {debug.grid && (
+        <div aria-hidden className="bp-grid pointer-events-none fixed inset-0 z-[80] opacity-60" />
       )}
-      {settings.fps && <FpsBadge />}
-      {settings.coords && <CoordsBadge />}
+      {debug.fps && <FpsBadge />}
+      {debug.coords && <CoordsBadge />}
     </>
   );
 }
@@ -483,26 +511,59 @@ function CoordsBadge() {
 /* ------------------------------------------------------------------ */
 
 type PanelProps = {
-  settings: DevSettings;
-  updateSetting: <K extends keyof DevSettings>(key: K, value: DevSettings[K]) => void;
-  resetSettings: () => void;
-  featuredCount: number;
+  draft: SiteSettings;
+  debug: DebugFlags;
+  dirty: boolean;
+  saving: boolean;
+  saveError: string | null;
+  savedTick: number;
+  setColor: (key: keyof SiteSettings["colors"], value: string) => void;
+  setBg: (bg: BgPresetKey) => void;
+  setType: (key: keyof SiteSettings["typography"], value: number) => void;
+  setToggle: (key: keyof SiteSettings["toggles"], value: boolean) => void;
+  setDebugFlag: (key: keyof DebugFlags, value: boolean) => void;
   featureAll: () => void;
   clearFeatured: () => void;
+  onSave: () => void;
+  onDiscard: () => void;
+  onRevert: () => void;
+  onResetDefaults: () => void;
   onExit: () => void;
 };
 
+const COLOR_FIELDS: { key: keyof SiteSettings["colors"]; label: string }[] = [
+  { key: "accent", label: "Accent" },
+  { key: "accent2", label: "Accent 2" },
+  { key: "fg", label: "Text" },
+  { key: "fgMuted", label: "Text muted" },
+  { key: "fgFaint", label: "Text faint" },
+  { key: "line", label: "Lines" },
+  { key: "lineStrong", label: "Lines strong" },
+];
+
 function DevPanel({
-  settings,
-  updateSetting,
-  resetSettings,
-  featuredCount,
+  draft,
+  debug,
+  dirty,
+  saving,
+  saveError,
+  savedTick,
+  setColor,
+  setBg,
+  setType,
+  setToggle,
+  setDebugFlag,
   featureAll,
   clearFeatured,
+  onSave,
+  onDiscard,
+  onRevert,
+  onResetDefaults,
   onExit,
 }: PanelProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [viewport, setViewport] = useState<{ w: number; h: number } | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
 
   useEffect(() => {
     const onResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
@@ -511,28 +572,41 @@ function DevPanel({
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // brief "Saved ✓" flash whenever a save completes
+  useEffect(() => {
+    if (savedTick === 0) return;
+    setJustSaved(true);
+    const t = setTimeout(() => setJustSaved(false), 1800);
+    return () => clearTimeout(t);
+  }, [savedTick]);
+
   return (
     <div className="fixed bottom-4 left-4 z-[95] select-none">
       {open && (
         <div className="mb-2 w-[min(92vw,20rem)] overflow-hidden rounded-2xl border border-line-strong bg-bg-raised/95 shadow-2xl shadow-black/60 backdrop-blur">
-          {/* header */}
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
             <span className="font-mono-tight text-[10px] uppercase tracking-[0.25em] text-accent">
               Dev Console
             </span>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Collapse dev panel"
-              className="text-fg-muted transition-colors hover:text-fg"
-            >
-              <span className="font-mono-tight text-xs">▾</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {dirty && (
+                <span className="font-mono-tight text-[9px] uppercase tracking-widest text-amber-400">
+                  Unsaved
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Collapse dev panel"
+                className="text-fg-muted transition-colors hover:text-fg"
+              >
+                <span className="font-mono-tight text-xs">▾</span>
+              </button>
+            </div>
           </div>
 
-          <div className="max-h-[70vh] overflow-y-auto px-4 py-3">
-            {/* appearance */}
-            <Section title="Accent">
+          <div className="max-h-[68vh] overflow-y-auto px-4 py-3">
+            <Section title="Accent presets">
               <div className="flex flex-wrap items-center gap-2">
                 {ACCENT_PRESETS.map((c) => (
                   <button
@@ -540,48 +614,40 @@ function DevPanel({
                     type="button"
                     title={c.name}
                     aria-label={c.name}
-                    aria-pressed={settings.accent.toLowerCase() === c.hex.toLowerCase()}
-                    onClick={() => updateSetting("accent", c.hex)}
+                    aria-pressed={draft.colors.accent.toLowerCase() === c.hex.toLowerCase()}
+                    onClick={() => setColor("accent", c.hex)}
                     className={`h-6 w-6 rounded-full border-2 transition-transform hover:scale-110 ${
-                      settings.accent.toLowerCase() === c.hex.toLowerCase()
+                      draft.colors.accent.toLowerCase() === c.hex.toLowerCase()
                         ? "border-fg"
                         : "border-transparent"
                     }`}
                     style={{ backgroundColor: c.hex }}
                   />
                 ))}
-                <label
-                  title="Custom colour"
-                  className="relative h-6 w-6 cursor-pointer overflow-hidden rounded-full border border-line-strong"
-                >
-                  <span
-                    className="absolute inset-0"
-                    style={{
-                      background:
-                        "conic-gradient(#f43f5e,#f59e0b,#22c55e,#3b82f6,#a855f7,#f43f5e)",
-                    }}
-                  />
-                  <input
-                    type="color"
-                    value={settings.accent}
-                    onChange={(e) => updateSetting("accent", e.target.value)}
-                    className="absolute inset-0 cursor-pointer opacity-0"
-                    aria-label="Custom accent colour"
-                  />
-                </label>
               </div>
+            </Section>
+
+            <Section title="Colours">
+              {COLOR_FIELDS.map((f) => (
+                <ColorField
+                  key={f.key}
+                  label={f.label}
+                  value={draft.colors[f.key]}
+                  onChange={(v) => setColor(f.key, v)}
+                />
+              ))}
             </Section>
 
             <Section title="Background">
               <div className="grid grid-cols-2 gap-1.5">
                 {(Object.keys(BG_PRESETS) as BgPresetKey[]).map((key) => {
                   const p = BG_PRESETS[key];
-                  const active = settings.bg === key;
+                  const active = draft.bg === key;
                   return (
                     <button
                       key={key}
                       type="button"
-                      onClick={() => updateSetting("bg", key)}
+                      onClick={() => setBg(key)}
                       aria-pressed={active}
                       className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-xs transition-colors ${
                         active
@@ -600,37 +666,44 @@ function DevPanel({
               </div>
             </Section>
 
-            {/* debug overlays */}
-            <Section title="Debug overlays">
-              <Toggle
-                label="Blueprint grid"
-                checked={settings.grid}
-                onChange={(v) => updateSetting("grid", v)}
+            <Section title="Typography">
+              <Slider
+                label="Base font"
+                min={13}
+                max={20}
+                step={0.5}
+                value={draft.typography.baseFontPx}
+                display={`${draft.typography.baseFontPx}px`}
+                onChange={(v) => setType("baseFontPx", v)}
               />
-              <Toggle
-                label="Outline elements"
-                checked={settings.outline}
-                onChange={(v) => updateSetting("outline", v)}
-              />
-              <Toggle
-                label="FPS meter"
-                checked={settings.fps}
-                onChange={(v) => updateSetting("fps", v)}
-              />
-              <Toggle
-                label="Cursor coordinates"
-                checked={settings.coords}
-                onChange={(v) => updateSetting("coords", v)}
-              />
-              <Toggle
-                label="Freeze animations"
-                checked={settings.pauseAnim}
-                onChange={(v) => updateSetting("pauseAnim", v)}
+              <Slider
+                label="Letter spacing"
+                min={-0.03}
+                max={0.12}
+                step={0.005}
+                value={draft.typography.letterSpacingEm}
+                display={`${draft.typography.letterSpacingEm.toFixed(3)}em`}
+                onChange={(v) => setType("letterSpacingEm", v)}
               />
             </Section>
 
-            {/* featured content */}
-            <Section title={`Featured · ${featuredCount}`}>
+            <Section title="Sections (published)">
+              <Toggle label="Hero video" checked={draft.toggles.heroVideo} onChange={(v) => setToggle("heroVideo", v)} />
+              <Toggle label="Footer" checked={draft.toggles.footer} onChange={(v) => setToggle("footer", v)} />
+              <Toggle label="CV nav link" checked={draft.toggles.navCv} onChange={(v) => setToggle("navCv", v)} />
+              <Toggle label="Blueprint grid backdrop" checked={draft.toggles.publicGrid} onChange={(v) => setToggle("publicGrid", v)} />
+              <Toggle label="Animations" checked={draft.toggles.animations} onChange={(v) => setToggle("animations", v)} />
+            </Section>
+
+            <Section title="Debug overlays (local)">
+              <Toggle label="Grid overlay" checked={debug.grid} onChange={(v) => setDebugFlag("grid", v)} />
+              <Toggle label="Outline elements" checked={debug.outline} onChange={(v) => setDebugFlag("outline", v)} />
+              <Toggle label="FPS meter" checked={debug.fps} onChange={(v) => setDebugFlag("fps", v)} />
+              <Toggle label="Cursor coordinates" checked={debug.coords} onChange={(v) => setDebugFlag("coords", v)} />
+              <Toggle label="Freeze animations" checked={debug.pauseAnim} onChange={(v) => setDebugFlag("pauseAnim", v)} />
+            </Section>
+
+            <Section title={`Featured · ${draft.featured.length}`}>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -649,7 +722,6 @@ function DevPanel({
               </div>
             </Section>
 
-            {/* session */}
             <Section title="Session">
               <dl className="font-mono-tight space-y-1 text-[11px] text-fg-muted">
                 <div className="flex justify-between">
@@ -665,35 +737,61 @@ function DevPanel({
               </dl>
             </Section>
 
-            {/* actions */}
+            {saveError && <p className="mt-2 text-xs text-red-400">{saveError}</p>}
+
+            {/* publish / discard */}
             <div className="mt-3 flex gap-2 border-t border-line pt-3">
               <button
                 type="button"
-                onClick={resetSettings}
-                className="flex-1 rounded-full border border-line px-3 py-2 text-xs text-fg-muted transition-colors hover:text-fg"
+                onClick={onDiscard}
+                disabled={saving || !dirty}
+                className="flex-1 rounded-full border border-line px-3 py-2 text-xs text-fg-muted transition-colors hover:text-fg disabled:opacity-40"
               >
-                Reset
+                Discard
+              </button>
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={saving || !dirty}
+                className="flex-[1.4] rounded-full bg-accent px-3 py-2 text-xs font-medium text-bg transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {saving ? "Publishing…" : justSaved ? "Saved ✓" : "Publish to everyone"}
+              </button>
+            </div>
+            <div className="mt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={onRevert}
+                className="flex-1 rounded-full px-3 py-1.5 text-[11px] text-fg-faint transition-colors hover:text-fg-muted"
+              >
+                Revert edits
+              </button>
+              <button
+                type="button"
+                onClick={onResetDefaults}
+                className="flex-1 rounded-full px-3 py-1.5 text-[11px] text-fg-faint transition-colors hover:text-fg-muted"
+              >
+                Load defaults
               </button>
               <button
                 type="button"
                 onClick={onExit}
-                className="flex-1 rounded-full bg-accent px-3 py-2 text-xs font-medium text-bg transition-opacity hover:opacity-90"
+                className="flex-1 rounded-full px-3 py-1.5 text-[11px] text-fg-faint transition-colors hover:text-red-400"
               >
-                Exit dev mode
+                Exit
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* the pill — click to open the console */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="font-mono-tight inline-flex items-center gap-2 rounded-full border border-accent/50 bg-bg/85 px-3 py-1.5 text-[10px] uppercase tracking-widest text-accent backdrop-blur transition-colors hover:border-accent hover:bg-bg"
         title={open ? "Close dev console" : "Open dev console"}
       >
-        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+        <span className={`h-1.5 w-1.5 rounded-full ${dirty ? "bg-amber-400" : "bg-accent"}`} />
         Dev mode
         <span className="text-accent/70">{open ? "▾" : "▸"}</span>
       </button>
@@ -742,5 +840,82 @@ function Toggle({
         />
       </span>
     </button>
+  );
+}
+
+function ColorField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const isHex = /^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value);
+  return (
+    <div className="flex items-center justify-between gap-2 text-xs text-fg-muted">
+      <span className="flex-shrink-0">{label}</span>
+      <span className="flex items-center gap-1.5">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          spellCheck={false}
+          aria-label={`${label} value`}
+          className="w-28 rounded border border-line bg-bg px-2 py-1 font-mono-tight text-[10px] text-fg outline-none focus:border-accent"
+        />
+        <label
+          className="relative h-5 w-5 flex-shrink-0 cursor-pointer overflow-hidden rounded border border-line-strong"
+          title="Pick colour"
+        >
+          <span className="absolute inset-0" style={{ background: value }} />
+          <input
+            type="color"
+            value={isHex && value.length !== 4 ? value : "#000000"}
+            onChange={(e) => onChange(e.target.value)}
+            className="absolute inset-0 cursor-pointer opacity-0"
+            aria-label={`${label} colour picker`}
+          />
+        </label>
+      </span>
+    </div>
+  );
+}
+
+function Slider({
+  label,
+  min,
+  max,
+  step,
+  value,
+  display,
+  onChange,
+}: {
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  display: string;
+  onChange: (v: number) => void;
+}) {
+  return (
+    <div className="text-xs text-fg-muted">
+      <div className="mb-1 flex items-center justify-between">
+        <span>{label}</span>
+        <span className="font-mono-tight tabular-nums text-fg">{display}</span>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-[var(--color-accent)]"
+        aria-label={label}
+      />
+    </div>
   );
 }
