@@ -9,10 +9,10 @@
       "autoPort": true
     },
     {
-      "name": "preview",
-      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
-      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev", "-p", "3021"],
-      "port": 3021,
+      "name": "previewtest",
+      "runtimeExecutable": "C:\\Users\\nikla\\AppData\\Local\\Temp\\claude\\C--Users-nikla-OneDrive-Dokumente-CODE-Website\\a29bf82b-0e4d-4920-a2bb-3a81d0967b9b\\scratchpad\\dev-test.cmd",
+      "runtimeArgs": [],
+      "port": 3022,
       "autoPort": true
     }
   ]

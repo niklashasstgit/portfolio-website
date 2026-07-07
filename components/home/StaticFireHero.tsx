@@ -24,30 +24,62 @@ export default function StaticFireHero({ children }: { children?: React.ReactNod
   const videoRef = useRef<HTMLVideoElement>(null);
   const { toggles } = useDevMode();
 
-  // Some mobile browsers ignore the autoplay attribute (iOS Low Power Mode, a
-  // backgrounded tab on first paint, aggressive data savers). Nudge playback
-  // ourselves and retry when the tab becomes visible or the user first touches
-  // the screen; if it's still blocked the poster simply stays put.
+  // Keep re-asserting playback until it actually sticks, for two reasons:
+  //  1. Some mobile browsers ignore the autoplay attribute (iOS Low Power Mode,
+  //     a backgrounded tab on first paint, aggressive data savers).
+  //  2. Toggling the hero back on in the dev console after a save re-mounts this
+  //     <video>, and the save's router.refresh() re-render can interrupt the
+  //     initial play() — the promise rejects, we swallow it, and the fresh
+  //     element is left frozen on frame 0, so the hero looks like it vanished.
+  // A single mount-time play() loses that race; a short retry pump wins it. If
+  // playback is genuinely blocked the pump gives up after ~3s and the poster
+  // simply stays put.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const tryPlay = () => {
+    let retries = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const clearTimer = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    // Attempt play, then re-check shortly after: if it didn't take (rejected or
+    // interrupted), try again — up to a bounded number of times per trigger.
+    const pump = () => {
+      clearTimer();
+      if (!video.paused || retries >= 15) return;
+      retries += 1;
       const p = video.play();
       if (p) p.catch(() => {});
+      timer = setTimeout(pump, 200);
+    };
+    const kick = () => {
+      retries = 0;
+      pump();
     };
 
-    tryPlay();
+    kick();
 
+    // Re-assert if anything leaves it paused (an interrupted play, a backgrounded
+    // tab), or on the user's first touch. Looping never fires "pause", so this
+    // only reacts to genuine stalls.
+    const onPause = () => kick();
     const onVisible = () => {
-      if (document.visibilityState === "visible") tryPlay();
+      if (document.visibilityState === "visible") kick();
     };
-    const onTouch = () => tryPlay();
+    const onTouch = () => kick();
 
+    video.addEventListener("pause", onPause);
     document.addEventListener("visibilitychange", onVisible);
-    document.addEventListener("touchstart", onTouch, { once: true, passive: true });
+    document.addEventListener("touchstart", onTouch, { passive: true });
 
     return () => {
+      clearTimer();
+      video.removeEventListener("pause", onPause);
       document.removeEventListener("visibilitychange", onVisible);
       document.removeEventListener("touchstart", onTouch);
     };
