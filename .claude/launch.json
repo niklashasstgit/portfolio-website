@@ -3,16 +3,9 @@
   "configurations": [
     {
       "name": "dev",
-      "runtimeExecutable": "C:\\Users\\nikla\\OneDrive\\Dokumente\\CODE\\Website\\dev-server.cmd",
+      "runtimeExecutable": "C:\\Users\\nikla\\OneDrive\\Dokumente\\GitHub\\portfolio-website\\dev-server.cmd",
       "runtimeArgs": [],
       "port": 3000,
-      "autoPort": true
-    },
-    {
-      "name": "previewtest",
-      "runtimeExecutable": "C:\\Users\\nikla\\AppData\\Local\\Temp\\claude\\C--Users-nikla-OneDrive-Dokumente-CODE-Website\\a29bf82b-0e4d-4920-a2bb-3a81d0967b9b\\scratchpad\\dev-test.cmd",
-      "runtimeArgs": [],
-      "port": 3022,
       "autoPort": true
     }
   ]

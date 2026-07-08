@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
         source: "/tc-baindt-preview",
         destination: "/tc-baindt-preview/index.html",
       },
+      // Same pattern for the Da Michele restaurant preview site.
+      {
+        source: "/da-michele-preview",
+        destination: "/da-michele-preview/index.html",
+      },
     ];
   },
 };
