@@ -39,11 +39,13 @@ export const metadata: Metadata = {
     title: `${siteName} — Aerospace Engineer`,
     description: siteDescription,
     locale: "en_US",
+    images: [{ url: "/title-image.png", width: 1344, height: 768 }],
   },
   twitter: {
     card: "summary_large_image",
     title: `${siteName} — Aerospace Engineer`,
     description: siteDescription,
+    images: ["/title-image.png"],
   },
   robots: {
     index: true,
