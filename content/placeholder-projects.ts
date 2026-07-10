@@ -36,51 +36,6 @@ export const placeholderProjects: PlaceholderProject[] = [
     ],
   },
   {
-    slug: "horten-h3-airfoil",
-    title: "Modernizing the Horten H3 Airfoil: Enhancing Efficiency and Preserving Stability",
-    tagline: "Re-optimised a historic flying-wing airfoil for efficiency while preserving its stability characteristics",
-    kicker: "Academic Project · University of Stuttgart",
-    year: "2024",
-    tags: ["X-Foil", "Airfoil Design", "CFD", "C++"],
-    summary:
-      "Re-optimised a historic flying-wing airfoil for efficiency while preserving its stability characteristics.",
-    chapters: [
-      {
-        id: "intro",
-        kicker: "01 — Overview",
-        title: "Re-optimising a historic flying-wing airfoil",
-        body: [
-          "The Horten H3 flying wing used reflex airfoils shaped to keep the tailless aircraft stable without a horizontal tail. This project re-optimised the airfoil with modern tools (X-Foil, CFD) to improve aerodynamic efficiency while preserving the pitching-moment characteristics that keep a tailless wing stable.",
-          "This page is still being filled in with the design iterations and results — for now, this is the one-line summary from the CV.",
-        ],
-        layout: "text-only",
-        tags: ["Flying Wing", "Reflex Airfoil", "Stability"],
-      },
-    ],
-  },
-  {
-    slug: "bridge-fea",
-    title: "Structural Analysis of a Bridge Under Various Load Cases Using FEA",
-    tagline: "FEA-based dynamic and modal analysis of a bridge structure under varying load conditions",
-    kicker: "Academic Project · University of Stuttgart",
-    year: "2024",
-    tags: ["FEA (Abaqus)", "Dynamic and Modal Analysis"],
-    summary: "FEA-based dynamic and modal analysis of a bridge structure under varying load conditions.",
-    chapters: [
-      {
-        id: "intro",
-        kicker: "01 — Overview",
-        title: "Dynamic and modal analysis of a bridge structure",
-        body: [
-          "A finite-element study of a bridge structure in Abaqus, covering modal analysis (natural frequencies and mode shapes) and its dynamic response under various load cases.",
-          "This page is still being filled in with the model and results — for now, this is the one-line summary from the CV.",
-        ],
-        layout: "text-only",
-        tags: ["Abaqus", "Modal Analysis"],
-      },
-    ],
-  },
-  {
     slug: "turbulence-models",
     title: "Comparison of Different Turbulence Models in Sub- and Transonic Flow Regimes",
     tagline: "Benchmarked several turbulence closure models against each other across flow regimes using TAU",

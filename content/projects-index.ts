@@ -64,7 +64,7 @@ export const projects: ProjectMeta[] = [
     category: "Academic - Project Work",
     year: "2021",
     tags: ["Python", "Internal Ballistics", "Solid Rocket Motors", "CAD"],
-    cover: "/images/placeholders/generic.svg",
+    cover: "/images/burn-simulation/cover.png",
     summary:
       "A generic internal-ballistics tool for solid rocket motors, built during a placement at Diehl Defence: it takes an arbitrary grain geometry and propellant and returns thrust, chamber pressure and impulse — including a full analytic star-grain model — validated against a real test firing.",
     status: "category",
@@ -292,19 +292,22 @@ export const cardProjects: CardProject[] = [
     title: "Modernizing the Horten H3 Airfoil",
     year: "2024",
     summary:
-      "Re-optimised a historic flying-wing airfoil for efficiency while preserving its stability characteristics.",
-    tags: ["X-Foil", "Airfoil Design", "CFD", "C++"],
+      "Full inverse redesign of the 1938 Horten H3 flying-wing airfoil: same pitching moment for unchanged trim and stability, ~10% less drag in the laminar bucket, a soft stall instead of a hard one — validated with CFD and converted into a glide-polar improvement.",
+    tags: ["Inverse Design", "Eppler Method", "Airfoil Design", "CFD", "Flying Wing"],
     section: "academic",
     academicSubsection: "masters",
+    cover: "/images/horten-h3-airfoil/cover.jpg",
   },
   {
     slug: "bridge-fea",
     title: "Structural Analysis of a Bridge Under Various Load Cases",
     year: "2024",
-    summary: "FEA-based dynamic and modal analysis of a bridge structure under varying load conditions.",
-    tags: ["FEA (Abaqus)", "Dynamic Analysis", "Modal Analysis"],
+    summary:
+      "Full FEM journey on a real steel footbridge: hybrid TCL-scripted meshing in ICEM, mesh convergence, prestressed modal analysis, pedestrian-induced dynamics in Abaqus — validated by jumping on the actual bridge with an accelerometer.",
+    tags: ["FEA (Abaqus)", "ANSYS ICEM", "Dynamic Analysis", "Modal Analysis"],
     section: "academic",
     academicSubsection: "masters",
+    cover: "/images/bridge-fea/cover.jpg",
   },
   {
     slug: "turbulence-models",
