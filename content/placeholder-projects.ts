@@ -36,28 +36,6 @@ export const placeholderProjects: PlaceholderProject[] = [
     ],
   },
   {
-    slug: "turbulence-models",
-    title: "Comparison of Different Turbulence Models in Sub- and Transonic Flow Regimes",
-    tagline: "Benchmarked several turbulence closure models against each other across flow regimes using TAU",
-    kicker: "Academic Project · University of Stuttgart",
-    year: "2024",
-    tags: ["CFD (TAU)", "Pointwise", "Airfoil Aerodynamics"],
-    summary: "Benchmarked several turbulence closure models against each other across flow regimes using TAU.",
-    chapters: [
-      {
-        id: "intro",
-        kicker: "01 — Overview",
-        title: "Benchmarking turbulence models across flow regimes",
-        body: [
-          "A comparative CFD study using DLR TAU (meshed in Pointwise) to see how different turbulence closure models perform on the same airfoil case as the flow moves from subsonic into transonic regimes.",
-          "This page is still being filled in with the comparison results — for now, this is the one-line summary from the CV.",
-        ],
-        layout: "text-only",
-        tags: ["Turbulence Modelling", "Transonic Flow"],
-      },
-    ],
-  },
-  {
     slug: "verification-device",
     title: "Development of a Functional Verification Device for an Electronic Subsystem",
     tagline: "Designed and built a dedicated PCB test rig to functionally verify an electronic subsystem",

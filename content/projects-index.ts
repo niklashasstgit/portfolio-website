@@ -313,10 +313,12 @@ export const cardProjects: CardProject[] = [
     slug: "turbulence-models",
     title: "Comparison of Turbulence Models in Sub- and Transonic Flow",
     year: "2024",
-    summary: "Benchmarked several turbulence closure models against each other across flow regimes using TAU.",
-    tags: ["CFD (TAU)", "Pointwise", "Airfoil Aerodynamics"],
+    summary:
+      "Six RANS turbulence models — from Spalart-Allmaras to a full Reynolds-stress model — benchmarked on the RAE 2822 airfoil in DLR TAU against wind-tunnel data: mesh convergence via Richardson extrapolation, shock positions, computing cost, and polars to stall including shock buffet.",
+    tags: ["CFD (TAU)", "Pointwise", "Turbulence Modelling", "Transonic Flow", "Airfoil Aerodynamics"],
     section: "academic",
     academicSubsection: "masters",
+    cover: "/images/turbulence-models/cover.png",
   },
   {
     slug: "verification-device",
