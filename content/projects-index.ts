@@ -171,10 +171,11 @@ export const cardProjects: CardProject[] = [
     title: "2D CFD Framework for Interactive Flow Simulation",
     year: "2025",
     summary:
-      "A from-scratch 2D Navier-Stokes solver with a live, interactive viewer for exploring fluid behaviour in real time.",
-    tags: ["Python", "CFD", "NS-Equations", "Scientific Visualization"],
+      "A from-scratch 2D flow solver with a live, interactive viewer: a vectorized D2Q9 Lattice-Boltzmann core in pure Python/numpy, validated against analytic and benchmark solutions, fast enough to draw obstacles with the mouse and watch a Kármán vortex street form in real time.",
+    tags: ["Python", "CFD", "Lattice-Boltzmann", "NS-Equations", "Scientific Visualization"],
     section: "personal",
     subsection: "software-projects",
+    cover: "/images/cfd-framework/cover.png",
   },
   {
     slug: "airfoil-design-code",
@@ -213,10 +214,11 @@ export const cardProjects: CardProject[] = [
     title: "Y4 Coaxial Multirotor Configuration",
     year: "2021",
     summary:
-      "Exploration of the Y4 (quad plus two) configuration with coaxial motor pairs, offering redundancy and different handling characteristics compared to standard quadrotors. Ardupilot-based flight control.",
+      "A 3D-printed Y4 multirotor: tricopter geometry with a coaxial rear motor pair instead of a yaw servo. Custom motor mixer, thrust-stand-derived yaw linearisation, and a deliberate motor-out flight test — Ardupilot-based flight control throughout.",
     tags: ["Ardupilot", "Y4 Config", "Flight Dynamics", "CAD"],
     section: "personal",
     subsection: "rc-projects",
+    cover: "/images/y4-multirotor/cover.jpg",
   },
   {
     slug: "tilt-rotor-vtol",
@@ -230,13 +232,14 @@ export const cardProjects: CardProject[] = [
   },
   {
     slug: "3d-printed-airframe",
-    title: "3D-Printed Composite Airframe",
+    title: "3D-Printed Aircraft: From Spitfire to Bf 109",
     year: "2019",
     summary:
-      "RC aircraft airframe designed in CAD and 3D-printed in nylon-based composite material. Emphasis on structural efficiency and rapid iteration of aerodynamic features.",
-    tags: ["3D Printing", "Nylon Composite", "Airframe Design", "Fusion 360"],
+      "Two fully 3D-printed RC warbirds: a thin-walled Spitfire that proved too heavy and crashed after twenty wobbly metres, and a Messerschmitt Bf 109 redesigned around an internal spine structure — light enough to actually fly.",
+    tags: ["3D Printing", "Airframe Design", "Lightweight Structures", "Fusion 360"],
     section: "personal",
     subsection: "rc-projects",
+    cover: "/images/3d-printed-airframe/cover.jpg",
   },
   {
     slug: "composite-fixed-wing",

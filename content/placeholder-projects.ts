@@ -102,29 +102,6 @@ export const placeholderProjects: PlaceholderProject[] = [
     ],
   },
   {
-    slug: "cfd-framework",
-    title: "Development of a 2D CFD Framework for Interactive Flow Simulation",
-    tagline: "A from-scratch 2D Navier-Stokes solver with a live, interactive viewer for exploring fluid behaviour in real time",
-    kicker: "Personal Project · Software",
-    year: "2025",
-    tags: ["Python", "CFD", "NS-Equations", "Scientific Visualization"],
-    summary:
-      "A from-scratch 2D Navier-Stokes solver with a live, interactive viewer for exploring fluid behaviour in real time.",
-    chapters: [
-      {
-        id: "intro",
-        kicker: "01 — Overview",
-        title: "A from-scratch 2D Navier-Stokes solver",
-        body: [
-          "A 2D computational-fluid-dynamics framework built from scratch, solving the incompressible Navier-Stokes equations, paired with a live interactive viewer so flow behaviour can be explored and perturbed in real time rather than only inspected after a batch run.",
-          "This page is still being filled in with the solver details and viewer demo — for now, this is the one-line summary from the CV.",
-        ],
-        layout: "text-only",
-        tags: ["Navier-Stokes", "Real-Time Visualization"],
-      },
-    ],
-  },
-  {
     slug: "diy-quadrotor",
     title: "DIY Autonomous Quadrotor",
     tagline: "First self-built Ardupilot multirotor platform with autonomous flight capabilities",
@@ -148,29 +125,6 @@ export const placeholderProjects: PlaceholderProject[] = [
     ],
   },
   {
-    slug: "y4-multirotor",
-    title: "Y4 Coaxial Multirotor Configuration",
-    tagline: "Experimental Y4 configuration study with redundant motor pairs",
-    kicker: "Personal Project · RC",
-    year: "2021",
-    tags: ["Ardupilot", "Y4 Config", "Flight Dynamics", "CAD"],
-    summary:
-      "Exploration of the Y4 (quad plus two) configuration with coaxial motor pairs, offering redundancy and different handling characteristics compared to standard quadrotors. Ardupilot-based flight control.",
-    chapters: [
-      {
-        id: "intro",
-        kicker: "01 — Overview",
-        title: "Exploring the Y4 coaxial configuration",
-        body: [
-          "A build exploring the Y4 (quad-plus-two) multirotor configuration, with coaxial motor pairs on two arms trading some efficiency for motor redundancy and different yaw-authority handling compared to a standard quadrotor. Ardupilot-based flight control throughout.",
-          "This page is still being filled in with build photos and flight notes — for now, this is the one-line summary from the CV.",
-        ],
-        layout: "text-only",
-        tags: ["Y4 Configuration", "Coaxial Motors"],
-      },
-    ],
-  },
-  {
     slug: "tilt-rotor-vtol",
     title: "Tilt-Rotor VTOL Transition Platform",
     tagline: "Electric aircraft with tilting rotors for vertical takeoff and forward flight",
@@ -190,29 +144,6 @@ export const placeholderProjects: PlaceholderProject[] = [
         ],
         layout: "text-only",
         tags: ["VTOL", "Flight Transition"],
-      },
-    ],
-  },
-  {
-    slug: "3d-printed-airframe",
-    title: "3D-Printed Composite Airframe",
-    tagline: "Lightweight RC aircraft airframe designed and additively manufactured",
-    kicker: "Personal Project · RC",
-    year: "2019",
-    tags: ["3D Printing", "Nylon Composite", "Airframe Design", "Fusion 360"],
-    summary:
-      "RC aircraft airframe designed in CAD and 3D-printed in nylon-based composite material. Emphasis on structural efficiency and rapid iteration of aerodynamic features.",
-    chapters: [
-      {
-        id: "intro",
-        kicker: "01 — Overview",
-        title: "An additively manufactured airframe",
-        body: [
-          "An RC aircraft airframe designed in CAD and 3D-printed in a nylon-based composite material, chosen to let structural and aerodynamic features iterate quickly without the lead time of traditional composite layup.",
-          "This page is still being filled in with the design iterations and print photos — for now, this is the one-line summary from the CV.",
-        ],
-        layout: "text-only",
-        tags: ["3D Printing", "Rapid Iteration"],
       },
     ],
   },
