@@ -327,9 +327,11 @@ export const cardProjects: CardProject[] = [
     slug: "verification-device",
     title: "Functional Verification Device for an Electronic Subsystem",
     year: "2020",
-    summary: "Designed and built a dedicated PCB test rig to functionally verify an electronic subsystem.",
-    tags: ["Electronics", "PCB Design", "Prototyping", "Hardware Testing"],
+    summary:
+      "Project work at Diehl Defence: a complete Arduino-based test box that automates 34 resistance checks on an electronic subsystem — concept trade studies, custom four-layer PCB with a 32-relay switching matrix and constant-current measurement, enclosure, firmware state machine and a built-in calibration path.",
+    tags: ["Electronics", "PCB Design", "Prototyping", "Hardware Testing", "Arduino (C++)"],
     section: "academic",
     academicSubsection: "bachelors",
+    cover: "/images/verification-device/cover.jpg",
   },
 ];

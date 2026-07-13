@@ -36,28 +36,6 @@ export const placeholderProjects: PlaceholderProject[] = [
     ],
   },
   {
-    slug: "verification-device",
-    title: "Development of a Functional Verification Device for an Electronic Subsystem",
-    tagline: "Designed and built a dedicated PCB test rig to functionally verify an electronic subsystem",
-    kicker: "Academic Project · DHBW Ravensburg",
-    year: "2020",
-    tags: ["Electronics", "PCB Design and Layout", "Prototyping", "Hardware Testing"],
-    summary: "Designed and built a dedicated PCB test rig to functionally verify an electronic subsystem.",
-    chapters: [
-      {
-        id: "intro",
-        kicker: "01 — Overview",
-        title: "A dedicated test rig for functional verification",
-        body: [
-          "Designed and built a purpose-built PCB test rig used to functionally verify an electronic subsystem — covering schematic capture, PCB layout, and prototyping the finished board.",
-          "This page is still being filled in with photos and test results — for now, this is the one-line summary from the CV.",
-        ],
-        layout: "text-only",
-        tags: ["Electronics", "PCB Design"],
-      },
-    ],
-  },
-  {
     slug: "smart-mirror",
     title: 'Smart Mirror Development and Business Concept for "Jugend Gründet"',
     tagline: "Built a smart-mirror device and pitched a full business concept around it in a national competition",
