@@ -1,12 +1,17 @@
 import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/site-config";
 import { projects, cardProjects } from "@/content/projects-index";
+import { hiddenSlugs } from "@/content/effective-projects";
+import { readSettings } from "@/lib/site-settings-store";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const projectSlugs = new Set([
-    ...projects.map((p) => p.slug),
-    ...cardProjects.map((p) => p.slug),
-  ]);
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const { projectOverrides } = await readSettings();
+  const hidden = hiddenSlugs(projectOverrides);
+  const projectSlugs = new Set(
+    [...projects.map((p) => p.slug), ...cardProjects.map((p) => p.slug)].filter(
+      (slug) => !hidden.has(slug)
+    )
+  );
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: siteUrl, changeFrequency: "monthly", priority: 1 },

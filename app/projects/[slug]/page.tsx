@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import ProjectHero from "@/components/ProjectHero";
 import ScrollStory from "@/components/scrollstory/ScrollStory";
 import { placeholderProjects } from "@/content/placeholder-projects";
+import { isProjectHidden } from "@/content/effective-projects";
+import { readSettings } from "@/lib/site-settings-store";
 
 export async function generateStaticParams() {
   return placeholderProjects.map((p) => ({ slug: p.slug }));
@@ -37,6 +39,10 @@ export default async function Page({
   const { slug } = await params;
   const project = placeholderProjects.find((p) => p.slug === slug);
   if (!project) notFound();
+
+  // Admin can hide a project from the public site — direct visits 404.
+  const { projectOverrides } = await readSettings();
+  if (isProjectHidden(slug, projectOverrides)) notFound();
 
   return (
     <>

@@ -9,7 +9,32 @@
  * imported from the layout (server), the API route (server), and the dev panel (client).
  */
 
+import {
+  sectionLabels,
+  subsectionLabels,
+  academicSubsectionLabels,
+  type ProjectSection,
+  type PersonalSubsection,
+  type AcademicSubsection,
+} from "@/content/types";
+
 export type BgPresetKey = "void" | "slate" | "blueprint" | "black" | "carbon";
+
+/**
+ * Per-project admin override, keyed by slug. Any field left undefined falls back
+ * to the project's static definition in content/projects-index.ts. Set from the
+ * /admin project manager; applied by content/effective-projects.ts.
+ */
+export type ProjectOverride = {
+  /** Hide the project from every public listing + 404 its page. */
+  hidden?: boolean;
+  /** Re-file the project into a different top-level section. */
+  section?: ProjectSection;
+  /** Re-file within the "personal" section. */
+  subsection?: PersonalSubsection;
+  /** Re-file within the "academic" section. */
+  academicSubsection?: AcademicSubsection;
+};
 
 export type SiteSettings = {
   /** Editable colours, applied to the matching --color-* variables. */
@@ -40,6 +65,8 @@ export type SiteSettings = {
   };
   /** Featured project slugs (was localStorage; now shared server-side). */
   featured: string[];
+  /** Per-project visibility / re-categorization overrides, keyed by slug. */
+  projectOverrides: Record<string, ProjectOverride>;
   /** Text content overrides (Phase 2 — present so the shape is stable). */
   content: {
     heroHeadline?: string;
@@ -90,6 +117,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
     animations: true,
   },
   featured: [],
+  projectOverrides: {},
   content: {},
 };
 
@@ -125,6 +153,43 @@ function optionalText(input: unknown, max = 200): string | undefined {
   const v = input.trim();
   if (!v) return undefined;
   return v.slice(0, max);
+}
+
+/**
+ * Sanitize the untrusted projectOverrides map: only known slug-shaped keys, only
+ * whitelisted fields, and section/subsection values checked against the real
+ * label-map keys — so a malicious patch can never introduce an unknown category
+ * or an arbitrary object shape.
+ */
+function sanitizeProjectOverrides(
+  input: unknown,
+  fallback: Record<string, ProjectOverride>
+): Record<string, ProjectOverride> {
+  if (!input || typeof input !== "object") return fallback;
+  const out: Record<string, ProjectOverride> = {};
+  const entries = Object.entries(input as Record<string, unknown>).slice(0, 300);
+  for (const [slug, raw] of entries) {
+    if (typeof slug !== "string" || slug.length === 0 || slug.length > 100) continue;
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as Record<string, unknown>;
+    const ov: ProjectOverride = {};
+    if (typeof r.hidden === "boolean") ov.hidden = r.hidden;
+    if (typeof r.section === "string" && r.section in sectionLabels) {
+      ov.section = r.section as ProjectSection;
+    }
+    if (typeof r.subsection === "string" && r.subsection in subsectionLabels) {
+      ov.subsection = r.subsection as PersonalSubsection;
+    }
+    if (
+      typeof r.academicSubsection === "string" &&
+      r.academicSubsection in academicSubsectionLabels
+    ) {
+      ov.academicSubsection = r.academicSubsection as AcademicSubsection;
+    }
+    // Only keep an entry that actually overrides something.
+    if (Object.keys(ov).length > 0) out[slug] = ov;
+  }
+  return out;
 }
 
 /**
@@ -174,6 +239,10 @@ export function mergeSettings(
       animations: bool(pg.animations, base.toggles.animations),
     },
     featured,
+    projectOverrides: sanitizeProjectOverrides(
+      "projectOverrides" in p ? p.projectOverrides : undefined,
+      base.projectOverrides
+    ),
     content: {
       heroHeadline: optionalText(pco.heroHeadline, 120) ?? base.content.heroHeadline,
       heroTagline: optionalText(pco.heroTagline, 240) ?? base.content.heroTagline,

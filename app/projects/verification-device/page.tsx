@@ -3,6 +3,7 @@ import ProjectHero from "@/components/ProjectHero";
 import ScrollStory from "@/components/scrollstory/ScrollStory";
 import { verificationDeviceChapters } from "@/content/verification-device";
 import { cardProjects, GENERIC_PLACEHOLDER } from "@/content/projects-index";
+import { guardProjectVisible } from "@/lib/project-visibility";
 
 const meta = cardProjects.find((p) => p.slug === "verification-device")!;
 
@@ -19,7 +20,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
+export default async function Page() {
+  await guardProjectVisible("verification-device");
+
   return (
     <>
       <ProjectHero

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import ProjectCard from "@/components/ProjectCard";
 import Reveal from "@/components/fx/Reveal";
-import { cardProjects, projects, cardToMeta, sortByDate } from "@/content/projects-index";
+import { getVisibleProjectsForSection } from "@/content/effective-projects";
+import { readSettings } from "@/lib/site-settings-store";
 import { ProjectSection, sectionLabels } from "@/content/types";
 
 export const metadata: Metadata = {
@@ -28,7 +29,8 @@ const sectionIntros: Record<ProjectSection, string> = {
     "Student engineering teams I've worked on — rockets and satellites, built alongside other students.",
 };
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const { projectOverrides } = await readSettings();
   return (
     <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 sm:py-28">
       <span className="font-mono-tight text-xs uppercase tracking-[0.25em] text-accent">
@@ -39,12 +41,9 @@ export default function ProjectsPage() {
       </h1>
 
       {sectionOrder.map((section) => {
-        // Full projects plus the lighter CV cards, all rendered as full cards
-        // (the CV cards fall back to the generic placeholder cover).
-        const pageProjects = sortByDate([
-          ...projects.filter((p) => p.section === section),
-          ...cardProjects.filter((c) => c.section === section).map(cardToMeta),
-        ]);
+        // Full projects plus the lighter CV cards, all rendered as full cards,
+        // with the admin's visibility/re-categorization applied.
+        const pageProjects = getVisibleProjectsForSection(section, projectOverrides);
 
         return (
           <Reveal key={section}>

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import Analytics from "@/components/Analytics";
 import { DevModeProvider } from "@/lib/devmode";
 import { siteUrl, siteName, fullName, siteDescription, siteKeywords } from "@/lib/site-config";
 import { cvBasics } from "@/content/cv";
@@ -109,6 +110,7 @@ export default async function RootLayout({
           <main className="relative z-[1] flex-1">{children}</main>
           {settings.toggles.footer && <Footer />}
         </DevModeProvider>
+        <Analytics />
       </body>
     </html>
   );

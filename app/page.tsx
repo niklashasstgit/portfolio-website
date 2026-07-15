@@ -2,12 +2,14 @@ import Link from "next/link";
 import Reveal from "@/components/fx/Reveal";
 import StaticFireHero from "@/components/home/StaticFireHero";
 import CategoryRow from "@/components/home/CategoryRow";
-import { projects, cardProjects, cardToMeta, sortByDate } from "@/content/projects-index";
+import { getVisibleProjectsForSection } from "@/content/effective-projects";
+import { readSettings } from "@/lib/site-settings-store";
 import { sectionLabels, ProjectSection } from "@/content/types";
 
 const sectionOrder: ProjectSection[] = ["personal", "academic", "associations"];
 
-export default function Home() {
+export default async function Home() {
+  const { projectOverrides } = await readSettings();
   return (
     <div>
       {/* Hero — animated static-fire scene */}
@@ -51,11 +53,8 @@ export default function Home() {
           </Reveal>
           {sectionOrder.map((section) => {
             // Every project in this section — the full ones plus the lighter
-            // CV cards (adapted so they render with the placeholder cover).
-            const sectionProjects = sortByDate([
-              ...projects.filter((p) => p.section === section),
-              ...cardProjects.filter((c) => c.section === section).map(cardToMeta),
-            ]);
+            // CV cards — with the admin's visibility/re-categorization applied.
+            const sectionProjects = getVisibleProjectsForSection(section, projectOverrides);
             if (sectionProjects.length === 0) return null;
             return (
               <Reveal key={section}>

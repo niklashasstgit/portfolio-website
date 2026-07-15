@@ -3,6 +3,7 @@ import ProjectHero from "@/components/ProjectHero";
 import ScrollStory from "@/components/scrollstory/ScrollStory";
 import { burnSimulationChapters } from "@/content/burn-simulation";
 import { projects } from "@/content/projects-index";
+import { guardProjectVisible } from "@/lib/project-visibility";
 
 const meta = projects.find((p) => p.slug === "burn-simulation")!;
 
@@ -14,7 +15,9 @@ export const metadata: Metadata = {
   openGraph: { title: meta.title, description: meta.summary, url: `/projects/${meta.slug}`, images: [meta.cover] },
 };
 
-export default function Page() {
+export default async function Page() {
+  await guardProjectVisible("burn-simulation");
+
   return (
     <>
       <ProjectHero
