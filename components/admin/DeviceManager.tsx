@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { IpLabel } from "@/lib/site-settings";
+import VisitDetail from "./VisitDetail";
 
 export type DeviceRow = {
   vid: string;
@@ -11,6 +12,16 @@ export type DeviceRow = {
   lastIp: string;
   network: string;
   location: string;
+  browser: string;
+  os: string;
+  deviceType: string;
+  screen: string;
+  viewport: string;
+  language: string;
+  timezone: string;
+  ua: string;
+  asn: string;
+  ref: string;
 };
 
 type Labels = Record<string, IpLabel>;
@@ -122,10 +133,12 @@ export default function DeviceManager({
             <thead className="border-b border-line bg-bg-raised/50 text-fg-muted">
               <tr className="font-mono-tight text-[10px] uppercase tracking-widest">
                 <th className="px-4 py-2.5 font-medium">Device</th>
+                <th className="px-4 py-2.5 font-medium">Browser / OS</th>
                 <th className="px-4 py-2.5 font-medium">Last network</th>
                 <th className="px-4 py-2.5 font-medium">Last IP</th>
                 <th className="px-4 py-2.5 text-right font-medium">Visits</th>
                 <th className="px-4 py-2.5 text-center font-medium">Exclude</th>
+                <th className="px-4 py-2.5 font-medium" />
               </tr>
             </thead>
             <tbody>
@@ -150,6 +163,14 @@ export default function DeviceManager({
                       <div className="mt-1 font-mono-tight text-[10px] text-fg-faint">
                         {r.vid.slice(0, 8)}… · last seen {fmtDate(r.lastSeen)}
                       </div>
+                    </td>
+                    <td className="px-4 py-3 text-fg-muted">
+                      {[r.browser, r.os].filter(Boolean).join(" · ") || "—"}
+                      {r.deviceType && (
+                        <span className="block text-xs capitalize text-fg-faint">
+                          {r.deviceType}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-fg-muted">
                       {r.network || "—"}
@@ -180,6 +201,22 @@ export default function DeviceManager({
                           }`}
                         />
                       </button>
+                    </td>
+                    <td className="px-4 py-3 align-top">
+                      <VisitDetail
+                        details={{
+                          browser: r.browser,
+                          os: r.os,
+                          deviceType: r.deviceType,
+                          screen: r.screen,
+                          viewport: r.viewport,
+                          language: r.language,
+                          timezone: r.timezone,
+                          ua: r.ua,
+                          asn: r.asn,
+                          ref: r.ref,
+                        }}
+                      />
                     </td>
                   </tr>
                 );

@@ -32,6 +32,17 @@ export type AnalyticsEvent = {
   /** attributed company, or null for residential/mobile/hosting IPs */
   company: string | null;
   ua: string;
+  /** Parsed from UA server-side: "Chrome", "Safari", "Firefox", ... */
+  browser: string;
+  /** Parsed from UA server-side: "Windows", "macOS", "iOS", "Android", "Linux", ... */
+  os: string;
+  /** Parsed from UA server-side. */
+  deviceType: "mobile" | "tablet" | "desktop";
+  /** Client-reported, all optional (best-effort, never blocks the beacon). */
+  screen: string; // e.g. "1920x1080"
+  viewport: string; // e.g. "1280x800"
+  language: string; // e.g. "de-DE"
+  timezone: string; // e.g. "Europe/Berlin"
 };
 
 const EVENTS_KEY = "analytics:events";
@@ -92,6 +103,19 @@ export async function readEvents(): Promise<AnalyticsEvent[]> {
       .filter((e): e is AnalyticsEvent => e !== null);
   }
   return readFileEvents();
+}
+
+/** Delete every recorded event (the IP-enrichment cache is left intact). */
+export async function clearEvents(): Promise<void> {
+  if (kvEnv()) {
+    await kvCommand(["DEL", EVENTS_KEY]);
+    return;
+  }
+  try {
+    await fs.rm(EVENTS_FILE, { force: true });
+  } catch {
+    /* already gone */
+  }
 }
 
 async function readFileEvents(): Promise<AnalyticsEvent[]> {

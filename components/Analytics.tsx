@@ -39,10 +39,21 @@ export default function Analytics() {
   useEffect(() => {
     if (!pathname || pathname.startsWith("/admin")) return;
     try {
+      const body = {
+        path: pathname,
+        ref: document.referrer,
+        vid: deviceId(),
+        // Best-effort client details — browser/OS/device type are re-derived
+        // server-side from the UA header, these fill in what only the client knows.
+        screen: `${screen.width}x${screen.height}`,
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        language: navigator.language || "",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+      };
       fetch("/api/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: pathname, ref: document.referrer, vid: deviceId() }),
+        body: JSON.stringify(body),
         keepalive: true,
       }).catch(() => {});
     } catch {

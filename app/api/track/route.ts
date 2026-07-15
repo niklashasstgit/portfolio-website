@@ -1,11 +1,21 @@
 import { headers } from "next/headers";
 import { companyFrom, lookupIp, type IpInfo } from "@/lib/ip-intel";
+import { parseUserAgent } from "@/lib/ua-parse";
 import {
   getCachedIpInfo,
   recordEvent,
   setCachedIpInfo,
   type AnalyticsEvent,
 } from "@/lib/analytics-store";
+
+/** Whitelisted "WxH" shape — never trust raw client strings past this. */
+function dims(input: unknown): string {
+  if (typeof input !== "string") return "";
+  return /^\d{1,5}x\d{1,5}$/.test(input) ? input : "";
+}
+function shortText(input: unknown, max: number): string {
+  return typeof input === "string" ? input.slice(0, max) : "";
+}
 
 // Runs on every public page view via the client beacon (components/Analytics.tsx).
 // Node runtime so we can use the file-backed store in local dev.
@@ -28,7 +38,15 @@ export async function POST(request: Request) {
     const ua = h.get("user-agent") ?? "";
     if (BOT_RE.test(ua)) return new Response(null, { status: 204 });
 
-    let body: { path?: unknown; ref?: unknown; vid?: unknown };
+    let body: {
+      path?: unknown;
+      ref?: unknown;
+      vid?: unknown;
+      screen?: unknown;
+      viewport?: unknown;
+      language?: unknown;
+      timezone?: unknown;
+    };
     try {
       body = (await request.json()) as typeof body;
     } catch {
@@ -41,6 +59,7 @@ export async function POST(request: Request) {
     if (path.startsWith("/admin")) return new Response(null, { status: 204 });
     const ref = (typeof body.ref === "string" ? body.ref : "").slice(0, 300);
     const vid = (typeof body.vid === "string" ? body.vid : "").slice(0, 64);
+    const { browser, os, deviceType } = parseUserAgent(ua);
 
     const ip = clientIp(h);
 
@@ -66,6 +85,13 @@ export async function POST(request: Request) {
       asn: info?.asn ?? "",
       company: info ? companyFrom(info) : null,
       ua: ua.slice(0, 300),
+      browser,
+      os,
+      deviceType,
+      screen: dims(body.screen),
+      viewport: dims(body.viewport),
+      language: shortText(body.language, 20),
+      timezone: shortText(body.timezone, 60),
     };
 
     await recordEvent(evt);

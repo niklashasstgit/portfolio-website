@@ -4,6 +4,8 @@ import { readSettings } from "@/lib/site-settings-store";
 import { isPrefixExcluded } from "@/lib/site-settings";
 import IpManager, { type IpRow } from "@/components/admin/IpManager";
 import DeviceManager, { type DeviceRow } from "@/components/admin/DeviceManager";
+import ClearLogsButton from "@/components/admin/ClearLogsButton";
+import VisitDetail from "@/components/admin/VisitDetail";
 
 export const dynamic = "force-dynamic";
 
@@ -110,6 +112,16 @@ function aggregateDevices(events: AnalyticsEvent[]): DeviceRow[] {
         lastIp: e.ip,
         network: e.company || e.org,
         location: locationOf(e),
+        browser: e.browser,
+        os: e.os,
+        deviceType: e.deviceType,
+        screen: e.screen,
+        viewport: e.viewport,
+        language: e.language,
+        timezone: e.timezone,
+        ua: e.ua,
+        asn: e.asn,
+        ref: e.ref,
       });
     } else {
       existing.visits += 1;
@@ -118,6 +130,16 @@ function aggregateDevices(events: AnalyticsEvent[]): DeviceRow[] {
         existing.lastIp = e.ip;
         if (e.company || e.org) existing.network = e.company || e.org;
         if (locationOf(e)) existing.location = locationOf(e);
+        existing.browser = e.browser;
+        existing.os = e.os;
+        existing.deviceType = e.deviceType;
+        existing.screen = e.screen;
+        existing.viewport = e.viewport;
+        existing.language = e.language;
+        existing.timezone = e.timezone;
+        existing.ua = e.ua;
+        existing.asn = e.asn;
+        existing.ref = e.ref;
       }
     }
   }
@@ -165,6 +187,11 @@ export default async function AdminAnalyticsPage() {
 
   return (
     <div className="space-y-10">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-fg">Overview</h2>
+        <ClearLogsButton />
+      </div>
+
       {/* Stat tiles */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <StatTile label="Total views" value={events.length} />
@@ -233,13 +260,16 @@ export default async function AdminAnalyticsPage() {
                   <th className="px-4 py-2.5 font-medium">Company / Network</th>
                   <th className="px-4 py-2.5 font-medium">Location</th>
                   <th className="px-4 py-2.5 font-medium">Page</th>
+                  <th className="px-4 py-2.5 font-medium" />
                 </tr>
               </thead>
               <tbody>
                 {recent.map((e, i) => (
                   <tr key={`${e.t}-${i}`} className="border-b border-line/60 last:border-b-0">
-                    <td className="px-4 py-2.5 whitespace-nowrap text-fg-muted">{fmtDate(e.t)}</td>
-                    <td className="px-4 py-2.5">
+                    <td className="px-4 py-2.5 whitespace-nowrap align-top text-fg-muted">
+                      {fmtDate(e.t)}
+                    </td>
+                    <td className="px-4 py-2.5 align-top">
                       {labelOf(e) ? (
                         <span className="rounded bg-accent/15 px-1.5 py-0.5 text-xs text-accent">
                           {labelOf(e)}
@@ -250,8 +280,26 @@ export default async function AdminAnalyticsPage() {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-fg-muted">{locationOf(e) || "—"}</td>
-                    <td className="px-4 py-2.5 font-mono-tight text-xs text-fg-muted">{e.path}</td>
+                    <td className="px-4 py-2.5 align-top text-fg-muted">{locationOf(e) || "—"}</td>
+                    <td className="px-4 py-2.5 align-top font-mono-tight text-xs text-fg-muted">
+                      {e.path}
+                    </td>
+                    <td className="px-4 py-2.5 align-top">
+                      <VisitDetail
+                        details={{
+                          browser: e.browser,
+                          os: e.os,
+                          deviceType: e.deviceType,
+                          screen: e.screen,
+                          viewport: e.viewport,
+                          language: e.language,
+                          timezone: e.timezone,
+                          ua: e.ua,
+                          asn: e.asn,
+                          ref: e.ref,
+                        }}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
