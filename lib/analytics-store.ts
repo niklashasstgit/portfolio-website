@@ -20,6 +20,8 @@ export type AnalyticsEvent = {
   t: number;
   path: string;
   ref: string;
+  /** persistent per-browser device id (from a first-party cookie/localStorage). */
+  vid: string;
   ip: string;
   city: string;
   region: string;

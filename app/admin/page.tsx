@@ -1,5 +1,9 @@
 import { readEvents, type AnalyticsEvent } from "@/lib/analytics-store";
 import { activeProvider } from "@/lib/ip-intel";
+import { readSettings } from "@/lib/site-settings-store";
+import { isPrefixExcluded } from "@/lib/site-settings";
+import IpManager, { type IpRow } from "@/components/admin/IpManager";
+import DeviceManager, { type DeviceRow } from "@/components/admin/DeviceManager";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +71,59 @@ function aggregateCompanies(events: AnalyticsEvent[]): CompanyRow[] {
   return [...map.values()].map((v) => v.row).sort((a, b) => b.visits - a.visits);
 }
 
+/** Distinct IPs seen, newest-visit metadata + visit count, for the IP manager. */
+function aggregateIps(events: AnalyticsEvent[]): IpRow[] {
+  const map = new Map<string, IpRow>();
+  for (const e of events) {
+    const existing = map.get(e.ip);
+    if (!existing) {
+      map.set(e.ip, {
+        ip: e.ip,
+        visits: 1,
+        lastSeen: e.t,
+        org: e.company || e.org,
+        location: locationOf(e),
+      });
+    } else {
+      existing.visits += 1;
+      if (e.t > existing.lastSeen) {
+        existing.lastSeen = e.t;
+        if (e.company || e.org) existing.org = e.company || e.org;
+        if (locationOf(e)) existing.location = locationOf(e);
+      }
+    }
+  }
+  return [...map.values()].sort((a, b) => b.visits - a.visits);
+}
+
+/** Distinct devices (by persistent id), for the device manager. */
+function aggregateDevices(events: AnalyticsEvent[]): DeviceRow[] {
+  const map = new Map<string, DeviceRow>();
+  for (const e of events) {
+    if (!e.vid) continue; // pre-cookie or bot events have no device id
+    const existing = map.get(e.vid);
+    if (!existing) {
+      map.set(e.vid, {
+        vid: e.vid,
+        visits: 1,
+        lastSeen: e.t,
+        lastIp: e.ip,
+        network: e.company || e.org,
+        location: locationOf(e),
+      });
+    } else {
+      existing.visits += 1;
+      if (e.t > existing.lastSeen) {
+        existing.lastSeen = e.t;
+        existing.lastIp = e.ip;
+        if (e.company || e.org) existing.network = e.company || e.org;
+        if (locationOf(e)) existing.location = locationOf(e);
+      }
+    }
+  }
+  return [...map.values()].sort((a, b) => b.visits - a.visits);
+}
+
 function StatTile({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-xl border border-line bg-bg-raised/50 px-4 py-3">
@@ -79,7 +136,21 @@ function StatTile({ label, value }: { label: string; value: number | string }) {
 }
 
 export default async function AdminAnalyticsPage() {
-  const events = await readEvents();
+  const [allEvents, settings] = await Promise.all([readEvents(), readSettings()]);
+  const ipLabels = settings.ipLabels ?? {};
+  const deviceLabels = settings.deviceLabels ?? {};
+  const excludedPrefixes = settings.excludedPrefixes ?? [];
+  // A visit's display name: its device label first, then its IP label.
+  const labelOf = (e: AnalyticsEvent) => deviceLabels[e.vid]?.label ?? ipLabels[e.ip]?.label;
+
+  // An event is hidden from the stats/tables if its device, its exact IP, or its
+  // IP prefix is excluded. The managers below still list everything so any of
+  // these can be toggled back on.
+  const isExcluded = (e: AnalyticsEvent) =>
+    deviceLabels[e.vid]?.excluded === true ||
+    ipLabels[e.ip]?.excluded === true ||
+    isPrefixExcluded(e.ip, excludedPrefixes);
+  const events = allEvents.filter((e) => !isExcluded(e));
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -89,6 +160,8 @@ export default async function AdminAnalyticsPage() {
   const uniqueIps = new Set(events.map((e) => e.ip)).size;
   const viewsToday = events.filter((e) => e.t >= todayMs).length;
   const recent = [...events].sort((a, b) => b.t - a.t).slice(0, 60);
+  const ipRows = aggregateIps(allEvents);
+  const deviceRows = aggregateDevices(allEvents);
 
   return (
     <div className="space-y-10">
@@ -167,9 +240,15 @@ export default async function AdminAnalyticsPage() {
                   <tr key={`${e.t}-${i}`} className="border-b border-line/60 last:border-b-0">
                     <td className="px-4 py-2.5 whitespace-nowrap text-fg-muted">{fmtDate(e.t)}</td>
                     <td className="px-4 py-2.5">
-                      <span className={e.company ? "text-fg" : "text-fg-faint"}>
-                        {e.company || e.org || "—"}
-                      </span>
+                      {labelOf(e) ? (
+                        <span className="rounded bg-accent/15 px-1.5 py-0.5 text-xs text-accent">
+                          {labelOf(e)}
+                        </span>
+                      ) : (
+                        <span className={e.company ? "text-fg" : "text-fg-faint"}>
+                          {e.company || e.org || "—"}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 text-fg-muted">{locationOf(e) || "—"}</td>
                     <td className="px-4 py-2.5 font-mono-tight text-xs text-fg-muted">{e.path}</td>
@@ -179,6 +258,20 @@ export default async function AdminAnalyticsPage() {
             </table>
           </div>
         )}
+      </section>
+
+      {/* Device labels + exclusion (survives IP changes / mobile↔WiFi) */}
+      <section>
+        <DeviceManager rows={deviceRows} initialLabels={deviceLabels} />
+      </section>
+
+      {/* IP + prefix labels + exclusion */}
+      <section>
+        <IpManager
+          rows={ipRows}
+          initialLabels={ipLabels}
+          initialPrefixes={excludedPrefixes}
+        />
       </section>
     </div>
   );

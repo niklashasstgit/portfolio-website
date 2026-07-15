@@ -3,10 +3,34 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
+const VID_KEY = "nb.vid.v1";
+
+/**
+ * A stable, per-browser device id. Persisted in localStorage so it survives IP
+ * changes (mobile↔WiFi, ISP rotation) and distinguishes devices that share one
+ * public IP (e.g. a phone + laptop on the same home WiFi). Lets the admin label
+ * and permanently exclude their own devices regardless of network.
+ */
+function deviceId(): string {
+  try {
+    let id = localStorage.getItem(VID_KEY);
+    if (!id) {
+      id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem(VID_KEY, id);
+    }
+    return id;
+  } catch {
+    return "";
+  }
+}
+
 /**
  * Fires a lightweight beacon to /api/track on first load and on every client-side
- * route change. The client only sends the path + referrer; the visitor's IP,
- * location and network-owner (company) are derived server-side from request
+ * route change. Sends the path, referrer and a persistent device id; the visitor's
+ * IP, location and network-owner (company) are derived server-side from request
  * headers — see app/api/track/route.ts.
  */
 export default function Analytics() {
@@ -18,7 +42,7 @@ export default function Analytics() {
       fetch("/api/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ path: pathname, ref: document.referrer }),
+        body: JSON.stringify({ path: pathname, ref: document.referrer, vid: deviceId() }),
         keepalive: true,
       }).catch(() => {});
     } catch {

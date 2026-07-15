@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const ua = h.get("user-agent") ?? "";
     if (BOT_RE.test(ua)) return new Response(null, { status: 204 });
 
-    let body: { path?: unknown; ref?: unknown };
+    let body: { path?: unknown; ref?: unknown; vid?: unknown };
     try {
       body = (await request.json()) as typeof body;
     } catch {
@@ -40,6 +40,7 @@ export async function POST(request: Request) {
     // Don't record hits on the admin console itself.
     if (path.startsWith("/admin")) return new Response(null, { status: 204 });
     const ref = (typeof body.ref === "string" ? body.ref : "").slice(0, 300);
+    const vid = (typeof body.vid === "string" ? body.vid : "").slice(0, 64);
 
     const ip = clientIp(h);
 
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
       t: Date.now(),
       path,
       ref,
+      vid,
       ip: ip || "unknown",
       city: info?.city ?? "",
       region: info?.region ?? "",

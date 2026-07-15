@@ -36,6 +36,16 @@ export type ProjectOverride = {
   academicSubsection?: AcademicSubsection;
 };
 
+/**
+ * Admin-assigned metadata for a specific visitor IP: a friendly name (e.g.
+ * "My phone", "Laptop") and/or an exclusion flag that hides that IP from the
+ * analytics dashboard. Keyed by IP address. Set from the /admin dashboard.
+ */
+export type IpLabel = {
+  label?: string;
+  excluded?: boolean;
+};
+
 export type SiteSettings = {
   /** Editable colours, applied to the matching --color-* variables. */
   colors: {
@@ -67,6 +77,12 @@ export type SiteSettings = {
   featured: string[];
   /** Per-project visibility / re-categorization overrides, keyed by slug. */
   projectOverrides: Record<string, ProjectOverride>;
+  /** Friendly names + exclusion flags for specific visitor IPs, keyed by IP. */
+  ipLabels: Record<string, IpLabel>;
+  /** Friendly names + exclusion flags for devices, keyed by device id (cookie). */
+  deviceLabels: Record<string, IpLabel>;
+  /** IP prefixes (leading octets, e.g. "84.56.12") excluded from analytics. */
+  excludedPrefixes: string[];
   /** Text content overrides (Phase 2 — present so the shape is stable). */
   content: {
     heroHeadline?: string;
@@ -118,6 +134,9 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   },
   featured: [],
   projectOverrides: {},
+  ipLabels: {},
+  deviceLabels: {},
+  excludedPrefixes: [],
   content: {},
 };
 
@@ -193,6 +212,45 @@ function sanitizeProjectOverrides(
 }
 
 /**
+ * Sanitize an untrusted label map (ipLabels / deviceLabels): keys within a length
+ * bound, a short label, and a boolean exclusion flag. Empty entries are dropped.
+ */
+function sanitizeLabelMap(
+  input: unknown,
+  fallback: Record<string, IpLabel>,
+  keyMax = 64
+): Record<string, IpLabel> {
+  if (!input || typeof input !== "object") return fallback;
+  const out: Record<string, IpLabel> = {};
+  const entries = Object.entries(input as Record<string, unknown>).slice(0, 1000);
+  for (const [key, raw] of entries) {
+    if (typeof key !== "string" || key.length === 0 || key.length > keyMax) continue;
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as Record<string, unknown>;
+    const entry: IpLabel = {};
+    const label = optionalText(r.label, 60);
+    if (label) entry.label = label;
+    if (r.excluded === true) entry.excluded = true;
+    if (entry.label !== undefined || entry.excluded) out[key] = entry;
+  }
+  return out;
+}
+
+// A prefix is 1–4 dotted decimal groups (IPv4 leading octets, e.g. "84.56.12"),
+// or a colon-bearing IPv6 leading string. Kept simple — matched by octet/segment
+// prefix at read time (see matchesPrefix in lib/analytics-store consumers).
+const PREFIX_RE = /^(\d{1,3}(\.\d{1,3}){0,3}\.?|[0-9a-fA-F:]{2,45})$/;
+
+function sanitizePrefixes(input: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(input)) return fallback;
+  const out = input
+    .filter((s): s is string => typeof s === "string")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0 && s.length <= 45 && PREFIX_RE.test(s));
+  return Array.from(new Set(out)).slice(0, 200);
+}
+
+/**
  * Deep-merge a (partial, untrusted) patch onto a base, whitelisting every key and
  * sanitizing every value. Returns a complete, safe SiteSettings.
  */
@@ -243,11 +301,36 @@ export function mergeSettings(
       "projectOverrides" in p ? p.projectOverrides : undefined,
       base.projectOverrides
     ),
+    ipLabels: sanitizeLabelMap("ipLabels" in p ? p.ipLabels : undefined, base.ipLabels),
+    deviceLabels: sanitizeLabelMap(
+      "deviceLabels" in p ? p.deviceLabels : undefined,
+      base.deviceLabels
+    ),
+    excludedPrefixes: sanitizePrefixes(
+      "excludedPrefixes" in p ? p.excludedPrefixes : undefined,
+      base.excludedPrefixes
+    ),
     content: {
       heroHeadline: optionalText(pco.heroHeadline, 120) ?? base.content.heroHeadline,
       heroTagline: optionalText(pco.heroTagline, 240) ?? base.content.heroTagline,
     },
   };
+}
+
+/** Does an IP fall under a dotted-octet (IPv4) or leading-segment (IPv6) prefix? */
+export function matchesPrefix(ip: string, prefix: string): boolean {
+  const p = prefix.replace(/\.$/, "");
+  if (!p) return false;
+  if (p.includes(":")) return ip.toLowerCase().startsWith(p.toLowerCase());
+  const pg = p.split(".");
+  const ig = ip.split(".");
+  if (ig.length < pg.length) return false;
+  return pg.every((g, i) => g === ig[i]);
+}
+
+/** True when the IP matches any excluded prefix. */
+export function isPrefixExcluded(ip: string, prefixes: string[]): boolean {
+  return prefixes.some((pre) => matchesPrefix(ip, pre));
 }
 
 /**

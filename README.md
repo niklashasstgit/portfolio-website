@@ -29,6 +29,13 @@ A password-gated console at [`/admin`](http://localhost:3000/admin) for:
 - **Analytics** — every public page view is recorded with the visitor's IP,
   location, and **network-owner company** (the ASN organization — which identifies
   corporate visitors; home/mobile IPs show only their ISP and aren't attributed).
+  Three ways to filter out your own traffic, all applied at display time: the
+  **Devices** panel (a persistent per-browser id — the reliable way, survives
+  mobile↔WiFi and daily ISP IP rotation, and tells apart devices on one WiFi),
+  the **Visitors by IP** panel (name/exclude an exact IP, or exclude its whole
+  **/24** block), and IP-prefix exclusion for rotating home addresses. Geolocation
+  is ISP-level (town accuracy isn't possible for consumer IPs); the real value is
+  the **company** signal for corporate visitors.
 
 Auth is a PIN in `ADMIN_PIN` → a signed, httpOnly session cookie. Overrides + events
 persist in Upstash Redis (KV) in production, or `.data/*.json` locally (gitignored).
