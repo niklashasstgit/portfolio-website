@@ -27,14 +27,14 @@ export const projects: ProjectMeta[] = [
   },
   {
     slug: "thermal-correlation",
-    title: "Spacecraft Thermal Correlation",
+    title: "Enhancing Spacecraft Thermal Design through Automated Data Correlation",
     tagline: "Automated Bayesian correlation of spacecraft thermal models — Airbus Defence and Space",
     category: "Academic · Master Thesis",
     year: "2026",
     tags: ["Python", "Bayesian Inference", "Machine Learning", "Thermal"],
     cover: "/images/thermal-correlation/sentinel2-model.jpg",
     summary:
-      "Master thesis at Airbus Defence and Space: replacing manual thermal-model tuning with a Bayesian pipeline and neural-network surrogate models, validated against real Sentinel-2 test data.",
+      "Master thesis at Airbus Defence and Space: replacing manual thermal-model tuning with a Bayesian pipeline and neural-network surrogate models, validated against real Sentinel-2 thermal-vacuum test data. Correlation parameters — material properties, contact conductances, radiative couplings — are treated as uncertain quantities with prior distributions rather than single hand-picked values, and MCMC sampling updates those priors against the measured chamber temperatures to yield full posterior distributions instead of one best guess. A trained neural-network surrogate replaces the expensive thermal solver inside the sampling loop, making the statistically grounded approach fast enough to actually run.",
     status: "category",
     href: "/projects/thermal-correlation",
     section: "academic",
@@ -99,6 +99,21 @@ export const projects: ProjectMeta[] = [
     status: "placeholder",
     href: "/projects/hyend-rocket",
     section: "associations",
+  },
+  {
+    slug: "pinn-optimization",
+    title: "Optimization of Hybrid Algorithms to Minimize the Loss Function in PINNs",
+    tagline: "A three-phase Adam → CMA-ES → L-BFGS optimizer, tuned by Optuna, that rescues physics-informed networks from ravines gradient descent alone can't escape",
+    category: "Academic Project · University of Stuttgart",
+    year: "2025",
+    tags: ["Python", "PyTorch", "Optuna", "CMA-ES", "Machine Learning"],
+    cover: "/images/pinn-optimization/cover.png",
+    summary:
+      "A hybrid Adam → CMA-ES → L-BFGS training pipeline for physics-informed neural networks, tuned with Optuna: an 18× accuracy improvement over Adam alone on the notoriously hard Allen–Cahn benchmark.",
+    status: "category",
+    href: "/projects/pinn-optimization",
+    section: "academic",
+    academicSubsection: "masters",
   },
 ];
 
@@ -268,16 +283,6 @@ export const cardProjects: CardProject[] = [
     tags: ["Arduino (C++)", "Robotics", "Problem Solving"],
     section: "personal",
     subsection: "hardware-projects",
-  },
-  {
-    slug: "pinn-optimization",
-    title: "Optimization of Hybrid Algorithms to Minimize the Loss Function in PINNs",
-    year: "2025",
-    summary:
-      "University project exploring hybrid optimisation strategies (gradient + heuristic) for training physics-informed neural networks.",
-    tags: ["Python", "PyTorch", "Optuna", "Machine Learning"],
-    section: "academic",
-    academicSubsection: "masters",
   },
   {
     slug: "lunar-lander",

@@ -13,29 +13,6 @@ export type PlaceholderProject = {
 
 export const placeholderProjects: PlaceholderProject[] = [
   {
-    slug: "pinn-optimization",
-    title: "Optimization of Hybrid Algorithms to Minimize the Loss Function in PINNs",
-    tagline: "University project exploring hybrid optimisation strategies for training physics-informed neural networks",
-    kicker: "Academic Project · University of Stuttgart",
-    year: "2025",
-    tags: ["Python", "PyTorch", "Optuna", "Machine Learning"],
-    summary:
-      "University project exploring hybrid optimisation strategies (gradient + heuristic) for training physics-informed neural networks.",
-    chapters: [
-      {
-        id: "intro",
-        kicker: "01 — Overview",
-        title: "Hybrid optimisation for physics-informed neural networks",
-        body: [
-          "Physics-informed neural networks (PINNs) fold governing equations directly into the loss function, which makes that loss landscape considerably harder to optimise than a standard supervised-learning problem. This project explored hybrid optimisation strategies — combining gradient-based and heuristic search — to train PINNs more reliably, using PyTorch and Optuna for hyperparameter search.",
-          "This page is still being filled in with methodology and results — for now, this is the one-line summary from the CV.",
-        ],
-        layout: "text-only",
-        tags: ["PINNs", "Optimization"],
-      },
-    ],
-  },
-  {
     slug: "smart-mirror",
     title: 'Smart Mirror Development and Business Concept for "Jugend Gründet"',
     tagline: "Built a smart-mirror device and pitched a full business concept around it in a national competition",
