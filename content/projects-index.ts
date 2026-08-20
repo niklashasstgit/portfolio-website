@@ -3,6 +3,8 @@ import {
   ProjectMeta,
   ProjectSection,
   AcademicSubsection,
+  ProjectLink,
+  ProjectDisclaimer,
   sectionLabels,
 } from "./types";
 
@@ -16,14 +18,18 @@ export const projects: ProjectMeta[] = [
     tagline: "Distributed multi-camera system for real-time aerial tracking",
     category: "Personal · Software",
     year: "2025",
-    tags: ["C++", "Python", "OpenCV", "Computer Vision", "CNN"],
-    cover: "/images/visual-sky-radar.png",
+    tags: ["C++", "Python", "OpenCV", "Computer Vision", "Kalman Filtering"],
+    cover: "/images/visual-sky-radar/cover.png",
     summary:
-      "A ground-based, multi-camera network that spots aircraft and contrails in the open sky, triangulates their position from two calibrated cameras, and cross-references live ADS-B traffic.",
+      "A ground-based network of three calibrated camera stations that spots aircraft and contrails in the open sky, triangulates their 3D position, fuses the fixes through an unscented Kalman filter, and cross-references live ADS-B traffic.",
     status: "flagship",
     href: "/projects/visual-sky-radar",
     section: "personal",
     subsection: "software-projects",
+    role: "Solo — concept, software, calibration, field testing",
+    duration: "2025, ongoing",
+    team: "Solo",
+    tools: ["C++17", "Qt6", "OpenCV", "FFmpeg", "Python"],
   },
   {
     slug: "thermal-correlation",
@@ -34,11 +40,19 @@ export const projects: ProjectMeta[] = [
     tags: ["Python", "Bayesian Inference", "Machine Learning", "Thermal"],
     cover: "/images/thermal-correlation/sentinel2-model.jpg",
     summary:
-      "Master thesis at Airbus Defence and Space: replacing manual thermal-model tuning with a Bayesian pipeline and neural-network surrogate models, validated against real Sentinel-2 thermal-vacuum test data. Correlation parameters — material properties, contact conductances, radiative couplings — are treated as uncertain quantities with prior distributions rather than single hand-picked values, and MCMC sampling updates those priors against the measured chamber temperatures to yield full posterior distributions instead of one best guess. A trained neural-network surrogate replaces the expensive thermal solver inside the sampling loop, making the statistically grounded approach fast enough to actually run.",
+      "Master thesis at Airbus Defence and Space: replacing manual thermal-model tuning with a Bayesian pipeline and a neural-network surrogate, validated against real Sentinel-2 thermal-vacuum test data. Correlation parameters become distributions with quantified confidence instead of single hand-picked values.",
     status: "category",
     href: "/projects/thermal-correlation",
     section: "academic",
     academicSubsection: "masters",
+    role: "Master thesis — method, implementation, validation, tooling",
+    duration: "6 months (10.2025 – 04.2026)",
+    team: "Solo, within the thermal architecture department",
+    tools: ["Python", "PyTorch", "PyQt5", "ESATAN-TMS"],
+    disclaimer: {
+      org: "Airbus Defence and Space GmbH, Immenstaad",
+      source: "my published master thesis, “Enhancing Spacecraft Thermal Design through Automated Data Correlation” (University of Stuttgart, 2026)",
+    },
   },
   {
     slug: "supersonic-inlet",
@@ -55,13 +69,21 @@ export const projects: ProjectMeta[] = [
     href: "/projects/supersonic-inlet",
     section: "academic",
     academicSubsection: "bachelors",
+    role: "Bachelor thesis — tool development, CFD validation",
+    duration: "3 months (2022)",
+    team: "Solo, within the propulsion & aerodynamics group",
+    tools: ["Python", "Ansys Fluent", "Git"],
+    disclaimer: {
+      org: "Diehl Defence",
+      source: "my published bachelor thesis, “Development of an Analytical Tool for Designing Supersonic Diffuser Inlets” (DHBW Ravensburg, 2022)",
+    },
   },
   {
     slug: "burn-simulation",
     title: "Generic Solid-Motor Burn Simulator",
     tagline:
       "An internal-ballistics tool that turns grain geometry into a thrust curve — Diehl Defence",
-    category: "Academic - Project Work",
+    category: "Academic · Project Work",
     year: "2021",
     tags: ["Python", "Internal Ballistics", "Solid Rocket Motors", "CAD"],
     cover: "/images/burn-simulation/cover.png",
@@ -71,40 +93,56 @@ export const projects: ProjectMeta[] = [
     href: "/projects/burn-simulation",
     section: "academic",
     academicSubsection: "bachelors",
+    role: "Project work — tool development, star-grain model, validation",
+    duration: "2021, during the dual study placement",
+    team: "Solo, within the propulsion group",
+    tools: ["Python", "Matlab", "RPA", "Git"],
+    disclaimer: {
+      org: "Diehl Defence",
+      source: "my published project report, “Development of a Generic Burn Simulation Tool for Solid Rocket Motors” (DHBW Ravensburg, 2021)",
+    },
   },
   {
     slug: "epfl-spacecraft",
     title: "EPFL Spacecraft Team",
-    tagline: "Structures pole — vibration testing & test stand design for the CHESS satellite",
-    category: "Student Association",
+    tagline: "Structures pole — mass model, test stand design & vibration testing for the CHESS satellite",
+    category: "Student Association · EPFL",
     year: "2025",
     tags: ["Vibration Testing", "Mass Model", "Structures"],
     cover: "/images/epfl-spacecraft/cover.png",
     summary:
-      "Structures-pole member on EPFL's student spacecraft team during a five-month exchange semester: built a digital and physical mass model of the CHESS cubesat and took it through a shaker-table vibration campaign.",
+      "Structures-pole member on EPFL's student spacecraft team during a five-month exchange semester: built a digital and physical mass model of the CHESS cubesat, designed its shaker fixture, and instrumented it for the vibration qualification campaign.",
     status: "category",
     href: "/projects/epfl-spacecraft",
     section: "associations",
+    role: "Structures pole — FE model, dummy masses, fixture, instrumentation",
+    duration: "5 months (02.2025 – 08.2025)",
+    team: "Structures pole of the EPFL Spacecraft Team",
+    tools: ["CAD", "Finite Element Analysis", "Shaker / accelerometry", "Machine shop"],
   },
   {
     slug: "hyend-rocket",
     title: "HyEnD — Hybrid Engine Development",
     tagline: "Propulsion & structures — solid propellant hybrid rocket engine",
-    category: "Student Association",
+    category: "Student Association · University of Stuttgart",
     year: "2023 – 2025",
     tags: ["Propulsion", "Composites", "Rocket Engines"],
     cover: "/images/hyend-rocket/cover.png",
     summary:
       "University of Stuttgart's student rocketry team. Propulsion/structures pole: solid propellant development and testing, engine design and build, carbon-fibre tank and combustion chamber construction.",
-    status: "placeholder",
+    status: "category",
     href: "/projects/hyend-rocket",
     section: "associations",
+    role: "Propulsion / structures pole",
+    duration: "15 months (10.2023 – 01.2025)",
+    team: "HyEnD student rocketry team",
+    tools: ["Matlab", "NASA CEA", "Composites layup", "Test stand"],
   },
   {
     slug: "pinn-optimization",
     title: "Optimization of Hybrid Algorithms to Minimize the Loss Function in PINNs",
     tagline: "A three-phase Adam → CMA-ES → L-BFGS optimizer, tuned by Optuna, that rescues physics-informed networks from ravines gradient descent alone can't escape",
-    category: "Academic Project · University of Stuttgart",
+    category: "Academic · Project Work",
     year: "2025",
     tags: ["Python", "PyTorch", "Optuna", "CMA-ES", "Machine Learning"],
     cover: "/images/pinn-optimization/cover.png",
@@ -114,6 +152,10 @@ export const projects: ProjectMeta[] = [
     href: "/projects/pinn-optimization",
     section: "academic",
     academicSubsection: "masters",
+    role: "Project work — optimiser design, tuning study, benchmarking",
+    duration: "2025",
+    team: "Solo",
+    tools: ["Python", "PyTorch", "Optuna", "CMA-ES"],
   },
 ];
 
@@ -152,6 +194,12 @@ export type CardProject = {
   academicSubsection?: AcademicSubsection;
   /** Optional own cover; falls back to the generic placeholder when absent. */
   cover?: string;
+  role?: string;
+  duration?: string;
+  team?: string;
+  tools?: string[];
+  links?: ProjectLink[];
+  disclaimer?: ProjectDisclaimer;
 };
 
 /**
@@ -174,6 +222,12 @@ export function cardToMeta(c: CardProject): ProjectMeta {
     section: c.section,
     subsection: c.subsection,
     academicSubsection: c.academicSubsection,
+    role: c.role,
+    duration: c.duration,
+    team: c.team,
+    tools: c.tools,
+    links: c.links,
+    disclaimer: c.disclaimer,
   };
 }
 
@@ -206,7 +260,7 @@ export const cardProjects: CardProject[] = [
   {
     slug: "investment-platform",
     title: "Investment Portfolio Management & Financial Analytics Platform",
-    year: "2022/23",
+    year: "2022 – present",
     summary:
       "A local-first Python platform that turns raw broker statement exports into a queryable portfolio database — with interactive charts, benchmark comparison against MSCI World, and performance, risk and allocation analytics.",
     tags: ["Python", "SQLite", "Financial Analytics", "Data Visualization", "Portfolio Management"],
@@ -237,13 +291,13 @@ export const cardProjects: CardProject[] = [
   },
   {
     slug: "tilt-rotor-vtol",
-    title: "Tilt-Rotor VTOL Transition Platform",
+    title: "Design and Implementation of a VTOL UAV with Flight Transition Optimisation",
     year: "2021",
     summary:
-      "Experimental tilt-rotor aircraft blending multirotor vertical takeoff with fixed-wing forward flight efficiency. Motorized servo-driven rotor tilt mechanism with Ardupilot transition logic.",
-    tags: ["VTOL", "Tilting Rotors", "Transition Flight", "Ardupilot"],
-    section: "personal",
-    subsection: "rc-projects",
+      "University project: an experimental tilt-rotor UAV blending multirotor vertical takeoff with fixed-wing forward-flight efficiency — structural, propulsion and aerodynamic design in CATIA, with a servo-driven rotor tilt mechanism and the flight mechanics of the transition itself as the design driver.",
+    tags: ["VTOL", "Tilting Rotors", "Transition Flight", "CAD (CATIA)", "Flight Mechanics"],
+    section: "academic",
+    academicSubsection: "bachelors",
   },
   {
     slug: "3d-printed-airframe",
@@ -265,6 +319,16 @@ export const cardProjects: CardProject[] = [
     tags: ["Composite", "Fiberglass", "Foam Core", "Hand-Laid Construction"],
     section: "personal",
     subsection: "rc-projects",
+  },
+  {
+    slug: "cnc-machine",
+    title: "Mostly 3D-Printed CNC Machine, Rebuilt for Real Tolerance",
+    year: "2018/19",
+    summary:
+      "A self-built CNC router whose structure was largely 3D-printed, then redesigned after the first version flexed under load — stiffer printed parts, metal where printing could not hold tolerance, and a rebuilt gantry that finally cut accurately in wood and aluminium.",
+    tags: ["CNC Design", "CAD (Solidworks)", "3D Printing", "Metalworking", "Laser Cutting"],
+    section: "personal",
+    subsection: "hardware-projects",
   },
   {
     slug: "smart-mirror",
@@ -294,6 +358,10 @@ export const cardProjects: CardProject[] = [
     section: "academic",
     academicSubsection: "masters",
     cover: "/images/lunar-lander/cover.png",
+    role: "Propulsion & transportation lead",
+    duration: "One week (Space Station Design Workshop 2025)",
+    team: "Team Gold — 20 people, one subsystem each",
+    tools: ["Matlab", "Astos", "Synera", "Trade-off matrices"],
   },
   {
     slug: "horten-h3-airfoil",
@@ -338,5 +406,13 @@ export const cardProjects: CardProject[] = [
     section: "academic",
     academicSubsection: "bachelors",
     cover: "/images/verification-device/cover.jpg",
+    role: "Project work — concept, PCB, enclosure, firmware, calibration",
+    duration: "2020, during the dual study placement",
+    team: "Solo, within the electronics group",
+    tools: ["Arduino (C++)", "PCB layout", "CAD", "Lab measurement"],
+    disclaimer: {
+      org: "Diehl Defence",
+      source: "my published project report, “Development of a Functional Verification Device for an Electronic Subsystem” (DHBW Ravensburg, 2020)",
+    },
   },
 ];

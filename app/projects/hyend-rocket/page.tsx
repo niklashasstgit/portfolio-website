@@ -27,7 +27,12 @@ export default async function Page() {
         year={meta.year}
         tags={meta.tags}
         cover={meta.cover}
-        status="placeholder"
+        role={meta.role}
+        duration={meta.duration}
+        team={meta.team}
+        tools={meta.tools}
+        links={meta.links}
+        disclaimer={meta.disclaimer}
       />
       <div className="py-6 sm:py-10">
         <ScrollStory chapters={hyendRocketChapters} />

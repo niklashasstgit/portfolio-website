@@ -245,6 +245,13 @@ export const hortenH3Chapters: Chapter[] = [
       },
       {
         type: "image",
+        src: "/images/horten-h3-airfoil/reynolds-transition.png",
+        alt: "Transition location versus lift coefficient across the Reynolds sweep",
+        caption: "Transition location across the sweep: the laminar run shortens with falling Reynolds number, exactly as it should, with no sudden jumps.",
+        fit: "contain",
+      },
+      {
+        type: "image",
         src: "/images/horten-h3-airfoil/turbulent-cl-cd.png",
         alt: "Drag polar comparison between free and forced transition",
         caption: "Free vs. forced transition: losing all laminar flow costs drag but no nasty habits.",
@@ -283,6 +290,13 @@ export const hortenH3Chapters: Chapter[] = [
         src: "/images/horten-h3-airfoil/cfd-separation.png",
         alt: "Upper surface separation location versus lift, design code against CFD",
         caption: "Separation onset vs. lift: the integral boundary-layer prediction (dashed) against CFD (green).",
+        fit: "contain",
+      },
+      {
+        type: "image",
+        src: "/images/horten-h3-airfoil/cfd-stall.png",
+        alt: "CFD lift curve through and beyond maximum lift",
+        caption: "Through Cl,max in CFD: the curve rounds over instead of breaking — the soft stall, confirmed.",
         fit: "contain",
       },
       {

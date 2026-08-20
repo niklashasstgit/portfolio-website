@@ -156,8 +156,11 @@ export const supersonicInletChapters: Chapter[] = [
     title: "Seconds instead of overnight, accurate enough to trust",
     body: [
       "The finished tool turns a supersonic-inlet preliminary design — a task that otherwise means setting up CFD — into a sub-ten-second analytical run that a designer can iterate freely, backed by a CFD campaign that quantifies exactly how much accuracy the speed costs: very little. It hands the next design phase a geometry and a full flow map to start from, on-design and off-design alike.",
+      "The speed is not a convenience, it is a change in what can be asked. A design space that takes overnight per point gets sampled at a handful of points chosen in advance; one that takes seconds gets swept. Sweeping is how you find that a design is sitting on the edge of a cliff in Mach number, or that a slightly worse on-design pressure recovery buys a much wider usable envelope — the kind of trade that simply does not surface when each answer is expensive.",
+      "The CFD campaign matters for the same reason a surrogate needs validating: an analytical tool is only useful if its error is known. Shock angles agreeing within 0.6° and flow parameters within a couple of percent is what licenses using the fast tool for the sweep and reserving CFD for the shortlist — which is exactly the division of labour that makes a preliminary-design phase efficient.",
+      "Its limits follow from its assumptions. The shock relations it is built on describe inviscid, sharp-edged, steady compression, so boundary-layer growth, shock–boundary-layer interaction and inlet buzz sit outside what it can see. Those are real effects that decide whether an inlet works, and they are exactly what the CFD stage is for.",
     ],
     layout: "text-only",
-    tags: ["Tooling", "Result"],
+    tags: ["Tooling", "Design Space", "Result"],
   },
 ];

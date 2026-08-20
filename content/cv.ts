@@ -1,12 +1,14 @@
 export const cvBasics = {
   name: "Niklas Julian Blattner",
   location: "Weingarten, Germany",
+  address: "Schonisweilerstraße 7/1, 88250 Weingarten, Germany",
   phone: "+49 175 7373 221",
   email: "niklasblattner@gmail.com",
   linkedin: "linkedin.com/in/niklas-blattner",
   linkedinHref: "https://www.linkedin.com/in/niklas-blattner",
-  github: "github.com/niklasblattner",
-  githubHref: "https://github.com/niklasblattner",
+  github: "github.com/niklas-blattner",
+  githubHref: "https://github.com/niklas-blattner",
+  website: "niklasjulianblattner.com",
 };
 
 export type EmploymentEntry = {
@@ -64,7 +66,7 @@ export type EducationEntry = {
 
 export const education: EducationEntry[] = [
   {
-    period: "10.2023 – 05.2026",
+    period: "10.2023 – 09.2026",
     degree: "M.Sc. Aerospace Engineering",
     org: "University of Stuttgart",
     detail:
@@ -117,17 +119,20 @@ export const skills = {
   coding: ["Python", "Matlab", "C++", "LaTeX", "Git"],
   software: [
     "Ansys Fluent & Mechanical",
-    "TAU",
+    "DLR TAU",
+    "Pointwise",
     "Abaqus",
-    "Fusion 360",
     "Solidworks",
     "CATIA",
     "TecPlot",
     "RPA",
+    "ESATAN-TMS",
+    "Systema Thermica",
+    "Microsoft Office Suite",
   ],
   misc: [
     "Toolshop experience",
-    "3D printing (FDM/SLA)",
+    "3D printing polymers (FDM/SLA)",
     "Football",
     "Glider pilot",
   ],
@@ -170,7 +175,7 @@ export const cvProjects: { group: string; items: CvProjectEntry[] }[] = [
       {
         year: "2025",
         title:
-          "Designing Lunar Landing and Ascend Stage at Space Station Design Workshop",
+          "Designing Lunar Landing and Ascent Stage at Space Station Design Workshop",
         skills: ["Matlab", "Astos", "Systems Engineering", "Synera"],
         href: "/projects/lunar-lander",
       },
@@ -252,7 +257,7 @@ export const cvProjects: { group: string; items: CvProjectEntry[] }[] = [
       {
         year: "2025",
         title: "Distributed Multi-Camera System for Real-Time Aerial Tracking",
-        skills: ["C++", "Python", "OpenCV", "Computer vision", "Visual tracking", "CNN object classification"],
+        skills: ["C++", "Python", "OpenCV", "Computer vision", "Visual tracking"],
         href: "/projects/visual-sky-radar",
       },
       {
@@ -276,12 +281,13 @@ export const cvProjects: { group: string; items: CvProjectEntry[] }[] = [
       {
         year: "2018/19",
         title: "Build and Redesigned Mostly 3D Printed CNC Machine",
-        skills: ["CNC design", "CAD (Fusion 360)", "Wood and metalworking", "Laser cutting"],
+        skills: ["CNC design", "CAD (Solidworks)", "Wood and metalworking", "Laser cutting"],
+        href: "/projects/cnc-machine",
       },
       {
         year: "from 2017",
         title: "Drone and Aircraft Design, Simulation, Testing and Manufacturing",
-        skills: ["CAD (Fusion 360)", "Additive manufacturing", "Ardupilot", "RC drone and plane design"],
+        skills: ["CAD", "Additive manufacturing", "Hot wiring", "Ardupilot", "RC drone and plane design"],
       },
       {
         year: "from 2015",

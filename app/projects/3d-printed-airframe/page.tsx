@@ -32,6 +32,12 @@ export default async function Page() {
         year={meta.year}
         tags={meta.tags}
         cover="/images/3d-printed-airframe/cover.jpg"
+        role={meta.role}
+        duration={meta.duration}
+        team={meta.team}
+        tools={meta.tools}
+        links={meta.links}
+        disclaimer={meta.disclaimer}
       />
       <div className="py-6 sm:py-10">
         <ScrollStory chapters={printedAirframeChapters} />

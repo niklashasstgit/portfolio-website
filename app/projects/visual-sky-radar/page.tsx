@@ -28,6 +28,12 @@ export default async function Page() {
         year={meta.year}
         tags={meta.tags}
         cover={meta.cover}
+        role={meta.role}
+        duration={meta.duration}
+        team={meta.team}
+        tools={meta.tools}
+        links={meta.links}
+        disclaimer={meta.disclaimer}
       />
       <section className="mx-auto max-w-6xl px-5 pt-14 sm:px-8 sm:pt-20">
         <span className="font-mono-tight text-xs uppercase tracking-[0.2em] text-accent">

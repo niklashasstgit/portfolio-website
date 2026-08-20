@@ -164,8 +164,11 @@ export const burnSimulationChapters: Chapter[] = [
     title: "A clean, generic tool that made it into the design toolchain",
     body: [
       "The rebuilt tool does what it set out to: it takes an arbitrary grain geometry and propellant and returns a full internal-ballistics prediction in seconds, flexible enough to sweep configurations and find one that meets a thrust requirement. The flexible star-grain implementation in particular turned a single-shape script into a genuinely general preliminary-design tool — and it was successfully adopted into the motor-design workflow.",
+      "What makes that adoption the real result is where the tool sits in the design process. Internal ballistics is the step that decides whether a motor concept is worth pursuing at all, and it happens early, when the geometry is still fluid and dozens of candidates deserve a look. A prediction that takes seconds can be run on all of them; one that takes a day can be run on the two someone already liked, which is a different and much worse kind of design decision.",
+      "The generality is what made it survive past its first use. A tool hard-coded to one grain shape is written again for the next motor. Because the geometry, the propellant and the burn-back logic are separated, a new configuration is a new geometry description rather than a new program — which is why it outlived the specific project it was written for.",
+      "The honest limits are worth stating alongside that. This is a preliminary-design tool built on ideal-rocket theory and a quasi-steady burn-back: it assumes uniform chamber conditions and no erosive burning, and it will not capture ignition transients or combustion instability. It sizes and screens motors; it does not qualify them.",
     ],
     layout: "text-only",
-    tags: ["Tooling", "Result"],
+    tags: ["Tooling", "Preliminary Design", "Result"],
   },
 ];

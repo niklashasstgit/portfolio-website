@@ -25,8 +25,10 @@ export const visualSkyRadarChapters: Chapter[] = [
     kicker: "02 — Multi-Camera Concept",
     title: "Two ground stations, one triangulated track",
     body: [
-      "The system runs two independent camera stations roughly 4.3 km apart. Each one watches a wide slice of sky, detects candidate targets locally, and reports bearing (azimuth/elevation) toward anything it finds.",
-      "Where two bearings from two known locations cross, that intersection is a 3D position estimate — classic optical triangulation, just aimed upward instead of across a lab bench.",
+      "The system began as two independent camera stations roughly 4.3 km apart, and now runs three. Each station watches its own slice of sky, detects candidate targets locally, and reports a bearing — azimuth and elevation — toward anything it finds. No station ever sends video anywhere; what crosses the network is a handful of angles per detection.",
+      "Where two bearings from two known locations cross, that intersection is a 3D position estimate — classic optical triangulation, just aimed upward instead of across a lab bench. The baseline between the stations is what makes it work: the wider the separation, the sharper the angle at which the two lines of sight meet, and the better conditioned the intersection.",
+      "That same geometry sets the error behaviour, and it is worth being clear about it. Bearing error translates into position error roughly in proportion to range, so a fixed angular uncertainty that is worth metres at close range is worth hundreds of metres at cruise altitude and slant range. And when a target sits near the plane containing both cameras, the two bearings become nearly parallel — the intersection stretches out along the line of sight and the depth estimate degrades badly, even though each individual bearing is as accurate as ever.",
+      "Almost every refinement further down this page exists to attack one of those two error sources: sharpen the bearings, or improve the geometry they are intersected in.",
     ],
     layout: "diagram",
     diagram: "camera-fov",
@@ -94,6 +96,7 @@ export const visualSkyRadarChapters: Chapter[] = [
       { type: "image", src: "/images/visual-sky-radar/filter-line-open-60.png", alt: "Line opening length 60", caption: "opening length 60" },
       { type: "image", src: "/images/visual-sky-radar/filter-line-open-80.png", alt: "Line opening length 80", caption: "opening length 80" },
       { type: "image", src: "/images/visual-sky-radar/filter-multiline-bank.png", alt: "Combined multi-line bank result", caption: "combined multi-line bank" },
+      { type: "image", src: "/images/visual-sky-radar/pipeline-08-linescan.png", alt: "Line-scan confirmation stage output", caption: "line-scan confirmation" },
     ],
     tags: ["Line Detection", "Filter Banks"],
   },
@@ -102,7 +105,10 @@ export const visualSkyRadarChapters: Chapter[] = [
     kicker: "07 — Synthetic Test Feeds",
     title: "Testing without waiting for a plane to fly over",
     body: [
-      "Real contrail sightings are intermittent and weather-dependent, which is a slow feedback loop for iterating on a detector. I built synthetic feeds with injected aircraft and contrail shapes to test the pipeline on demand and validate against a known ground truth before ever pointing it at the sky.",
+      "Real contrail sightings are intermittent and weather-dependent, which is a miserable feedback loop for iterating on a detector: change a parameter, then wait for the sky to cooperate before finding out whether it helped.",
+      "So I built synthetic feeds — generated frames with aircraft and contrail shapes injected at known positions, on known trajectories, over backgrounds with controllable noise and sky gradient. That inverts the problem. Instead of guessing whether a missed detection was the detector's fault or the weather's, I know exactly what was in the frame and exactly where, so every miss and every false positive is attributable.",
+      "It also makes the detector's failure boundary measurable rather than anecdotal. Sweeping contrail contrast down until detection breaks gives a real answer to \"how faint can it be and still be found\", which is not a question intermittent real sightings can answer in any reasonable amount of time.",
+      "The synthetic feeds carry the obvious caveat that they only contain the failure modes I thought to simulate — real skies produce cloud edges, lens flare and aircraft that are nothing like the model. They are for fast iteration; the real footage remains the judge.",
     ],
     layout: "image-right",
     media: [
@@ -116,7 +122,7 @@ export const visualSkyRadarChapters: Chapter[] = [
     title: "From research script to a live Qt6 application",
     body: [
       "The working pipeline moved from a Python prototype into a native C++17 / Qt6 application with FFmpeg-based RTSP ingestion, so it can run continuously against live camera feeds rather than pre-recorded clips. The Python side still hosts the terrain-cache rendering, OpenSky polling, and the analysis tooling used to validate results.",
-      "The two-camera setup, its FOV calibration, and its cone orientation all live in versioned JSON config files — camera_specs.json and cone_orientations.json — so re-pointing or re-calibrating a station doesn't require touching code, just re-running the wall calibration and updating a couple of numbers.",
+      "Each station's FOV calibration and cone orientation live in versioned JSON config files — camera_specs.json and cone_orientations.json — so re-pointing or re-calibrating a station doesn't require touching code, just re-running the wall calibration and updating a couple of numbers.",
     ],
     layout: "text-only",
     tags: ["C++17", "Qt6", "FFmpeg", "RTSP"],
@@ -210,7 +216,9 @@ export const visualSkyRadarChapters: Chapter[] = [
     title: "A three-station, filtered tracking pipeline",
     body: [
       "The system now runs three calibrated ground stations, detects contrails and bright aircraft across a range of sky conditions, and cross-references every detection against live ADS-B traffic. Residual pointing offsets are calibrated out against matched tracks, and triangulated fixes are fused through an unscented Kalman filter into a smooth 3D track that holds up through turns and dropped frames.",
-      "The current frontier is timing: tightening detection synchronisation between the three feeds so the bearings fused at each instant belong to exactly the same moment — the largest remaining source of triangulation error.",
+      "Measured against the original question — can two cheap phone cameras triangulate an aircraft — the answer is yes, with the caveat that the interesting work was never the triangulation. Intersecting two bearings is trigonometry. Everything that took real effort went into making those bearings trustworthy: calibrating fields of view that the manufacturer states only approximately, fitting out the residual mounting misalignment against ADS-B truth, and rejecting the enormous number of things in a sky photograph that look like a thin white line and are not an aircraft.",
+      "The current frontier is timing. Bearings fused at a given instant have to belong to the same instant, and three independent cameras with independent capture clocks do not naturally agree on when \"now\" is. A target crossing the sky moves measurably between frames, so a synchronisation error of a fraction of a second injects a bearing error that no amount of filtering removes — it looks like a consistent, plausible measurement of a position the aircraft was not at. That is the largest remaining source of triangulation error and the next thing to fix.",
+      "After that, the obvious extension is to let the system use its own history: the ADS-B cross-reference currently validates tracks after the fact, but the same matched data could train the detector on exactly the targets it missed.",
     ],
     layout: "text-only",
     tags: ["Status", "Next Steps"],

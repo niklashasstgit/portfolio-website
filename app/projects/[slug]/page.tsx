@@ -52,7 +52,6 @@ export default async function Page({
         tagline={project.tagline}
         year={project.year}
         tags={project.tags}
-        status="placeholder"
       />
       <div className="py-6 sm:py-10">
         <ScrollStory chapters={project.chapters} />

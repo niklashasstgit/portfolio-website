@@ -106,7 +106,7 @@ export default async function RootLayout({
           <div aria-hidden className="site-grid-overlay bp-grid" />
         )}
         <DevModeProvider initialSettings={settings}>
-          <Nav />
+          <Nav projectOverrides={settings.projectOverrides} />
           <main className="relative z-[1] flex-1">{children}</main>
           {settings.toggles.footer && <Footer />}
         </DevModeProvider>

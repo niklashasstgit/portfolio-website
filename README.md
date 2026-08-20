@@ -1,4 +1,4 @@
-# niklasblattner.com — Portfolio
+# niklasjulianblattner.com — Portfolio
 
 Personal engineering portfolio built with Next.js (App Router), Tailwind CSS 4, GSAP, and react-three-fiber.
 

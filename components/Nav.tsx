@@ -3,57 +3,69 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { projects } from "@/content/projects-index";
-import { sectionLabels, subsectionLabels, academicSubsectionLabels, ProjectSection } from "@/content/types";
+import { getVisibleProjects } from "@/content/effective-projects";
+import {
+  sectionLabels,
+  subsectionLabels,
+  academicSubsectionLabels,
+  ProjectSection,
+} from "@/content/types";
+import type { ProjectOverride } from "@/lib/site-settings";
 import { useDevMode } from "@/lib/devmode";
 
 const navSections: ProjectSection[] = ["personal", "academic", "associations"];
-const projectGroups = navSections.map((section) => {
-  const sectionProjects = projects.filter((p) => p.section === section);
 
-  if (section === "personal") {
-    // Group personal projects by subsection (show all subsections even if only cardProjects)
-    const subsections = ["rc-projects", "software-projects", "hardware-projects"] as const;
-    const grouped = subsections.map((sub) => ({
-      subsection: sub,
-      label: subsectionLabels[sub],
-      items: sectionProjects.filter((p) => p.subsection === sub),
-    }));
+const personalSubs = ["rc-projects", "software-projects", "hardware-projects"] as const;
+const academicSubs = ["masters", "bachelors"] as const;
 
-    return {
-      section,
-      label: sectionLabels[section],
-      subsections: grouped,
-      items: [] as typeof sectionProjects,
-    };
-  }
+type NavSub = { key: string; label: string; href: string; count: number };
+type NavGroup = { section: ProjectSection; label: string; href: string; subsections: NavSub[] };
 
-  if (section === "academic") {
-    // Get unique academic subsections
-    const academicSubs = new Set(sectionProjects.map((p) => p.academicSubsection).filter(Boolean));
-    const grouped = Array.from(academicSubs)
-      .map((sub) => ({
-        subsection: sub,
-        label: academicSubsectionLabels[sub as keyof typeof academicSubsectionLabels],
+/**
+ * Build the menu from the same override-aware, unified catalog the public pages
+ * render — so every project appears, hidden ones don't, and each entry links to
+ * the section it actually belongs to.
+ */
+function buildGroups(overrides: Record<string, ProjectOverride> | undefined): NavGroup[] {
+  const visible = getVisibleProjects(overrides);
+
+  return navSections.map((section) => {
+    const inSection = visible.filter((p) => p.section === section);
+    const href = `/projects#${section}`;
+    let subsections: NavSub[] = [];
+
+    if (section === "personal") {
+      subsections = personalSubs.map((sub) => ({
+        key: sub,
+        label: subsectionLabels[sub],
+        href: `/projects#${section}-${sub}`,
+        count: inSection.filter((p) => p.subsection === sub).length,
       }));
+    } else if (section === "academic") {
+      subsections = academicSubs.map((sub) => ({
+        key: sub,
+        label: academicSubsectionLabels[sub],
+        href: `/projects#${section}-${sub}`,
+        count: inSection.filter((p) => p.academicSubsection === sub).length,
+      }));
+    }
 
     return {
       section,
       label: sectionLabels[section],
-      subsections: grouped,
-      items: sectionProjects,
+      href,
+      // Never advertise an empty drawer.
+      subsections: subsections.filter((s) => s.count > 0),
     };
-  }
+  });
+}
 
-  return {
-    section,
-    label: sectionLabels[section],
-    subsections: undefined,
-    items: sectionProjects,
-  };
-});
-
-export default function Nav() {
+export default function Nav({
+  projectOverrides,
+}: {
+  projectOverrides?: Record<string, ProjectOverride>;
+}) {
+  const projectGroups = buildGroups(projectOverrides);
   const pathname = usePathname();
   const { registerLogoClick, toggles } = useDevMode();
   const [open, setOpen] = useState(false);
@@ -123,25 +135,24 @@ export default function Nav() {
                 <div className="rounded-lg border border-line bg-bg-raised p-3 shadow-2xl shadow-black/40">
                   {projectGroups.map((g) => (
                     <div key={g.section}>
-                      <a
-                        href={`/#projects`}
+                      <Link
+                        href={g.href}
                         onClick={() => setProjectsOpen(false)}
                         className="block px-3 py-1.5 font-mono-tight text-[10px] uppercase tracking-widest text-fg hover:text-accent"
                       >
                         {g.label}
-                      </a>
-                      {g.subsections && (
-                        g.subsections.map((sub) => (
-                          <a
-                            key={sub.subsection || sub.label}
-                            href={`/#projects`}
-                            onClick={() => setProjectsOpen(false)}
-                            className="block px-6 py-1 font-mono-tight text-[9px] uppercase tracking-widest text-fg-faint hover:text-accent"
-                          >
-                            {sub.label}
-                          </a>
-                        ))
-                      )}
+                      </Link>
+                      {g.subsections.map((sub) => (
+                        <Link
+                          key={sub.key}
+                          href={sub.href}
+                          onClick={() => setProjectsOpen(false)}
+                          className="flex items-center justify-between gap-3 px-6 py-1 font-mono-tight text-[9px] uppercase tracking-widest text-fg-faint hover:text-accent"
+                        >
+                          <span>{sub.label}</span>
+                          <span className="text-fg-faint/70">{sub.count}</span>
+                        </Link>
+                      ))}
                     </div>
                   ))}
                   <a
@@ -185,25 +196,24 @@ export default function Nav() {
             </Link>
             {projectGroups.map((g) => (
               <div key={g.section} className="flex flex-col gap-0.5">
-                <a
-                  href="/#projects"
+                <Link
+                  href={g.href}
                   onClick={() => setOpen(false)}
                   className="mt-2 block px-2 py-1.5 font-mono-tight text-[10px] uppercase tracking-widest text-fg hover:text-accent"
                 >
                   {g.label}
-                </a>
-                {g.subsections && (
-                  g.subsections.map((sub) => (
-                    <a
-                      key={sub.subsection || sub.label}
-                      href="/#projects"
-                      onClick={() => setOpen(false)}
-                      className="block px-4 py-1 font-mono-tight text-[9px] uppercase tracking-widest text-fg-faint hover:text-accent"
-                    >
-                      {sub.label}
-                    </a>
-                  ))
-                )}
+                </Link>
+                {g.subsections.map((sub) => (
+                  <Link
+                    key={sub.key}
+                    href={sub.href}
+                    onClick={() => setOpen(false)}
+                    className="flex items-center justify-between gap-3 px-4 py-1 font-mono-tight text-[9px] uppercase tracking-widest text-fg-faint hover:text-accent"
+                  >
+                    <span>{sub.label}</span>
+                    <span className="text-fg-faint/70">{sub.count}</span>
+                  </Link>
+                ))}
               </div>
             ))}
             <Link href="/projects" className="mt-2 border-t border-line px-2 py-2 font-mono-tight text-[10px] uppercase tracking-widest text-accent hover:text-fg transition-colors" onClick={() => setOpen(false)}>

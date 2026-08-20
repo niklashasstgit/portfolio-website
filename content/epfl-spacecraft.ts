@@ -111,11 +111,13 @@ export const epflSpacecraftChapters: Chapter[] = [
     kicker: "08 — Onto the Shaker",
     title: "Fixturing and instrumenting the model for test",
     body: [
-      "The assembled model was mounted to the shaker through a fixture at its launch interface, and accelerometers were bonded at the base and at points up the stack — including near the predicted mode shapes, so the sensors would actually see the resonances the model expected.",
-      "The test itself follows the standard sequence used to qualify a satellite structure: low-level sine sweeps to find the resonances, then random vibration up to qualification levels along each axis.",
+      "A shaker test is only as good as the thing bolted between the table and the article, so the test stand was its own design job. The fixture has to reproduce the satellite's launch interface exactly — same bolt pattern, same clamping — while being stiff enough that its own resonances sit well above the frequency band of interest. A fixture that flexes inside the test band contaminates every measurement taken through it: you can no longer tell whether a peak belongs to the satellite or to the adapter holding it.",
+      "It also has to work in three orientations, because the model is qualified along each of its axes in turn, which means either a fixture that can be reconfigured or one rigid enough to be re-mounted without changing what it contributes.",
+      "Instrumentation was planned off the back of the finite-element results rather than by eye. Accelerometers went at the base, to measure what the shaker was actually delivering into the structure, and at points up the stack chosen where the predicted mode shapes have their largest deflections — because an accelerometer sitting at a node of a mode will not see that mode at all, however well it is glued down.",
+      "The campaign itself follows the standard qualification sequence: low-level sine sweeps to locate the resonances, then random vibration to qualification levels along each axis, with the sweeps repeated in between.",
     ],
     layout: "text-only",
-    tags: ["Shaker", "Accelerometers", "Test Fixture"],
+    tags: ["Test Stand Design", "Fixture Stiffness", "Accelerometer Placement"],
   },
   {
     id: "sine-sweep",
@@ -144,8 +146,9 @@ export const epflSpacecraftChapters: Chapter[] = [
     kicker: "11 — Test vs. Simulation",
     title: "Closing the loop between the model and the measurement",
     body: [
-      "The final step is correlation: line the measured natural frequencies up against the finite-element prediction and tune the model — bolt stiffnesses, joint representations, boundary conditions — until digital and physical agree. A well-built mass model typically lands its first bending mode within a few percent of the prediction and comfortably above the launcher's minimum-frequency requirement, which is what tells you the modelling assumptions can be trusted for the flight structure too.",
-      "I handed the campaign over at this correlation stage — my five months covered building both the digital and the physical model and getting them onto the shaker, and the team carried the final model-tuning forward from there.",
+      "The final step is correlation: line the measured natural frequencies up against the finite-element prediction and tune the model — bolt stiffnesses, joint representations, boundary conditions — until the digital and the physical agree. Where they disagree is where the modelling assumptions were wrong, and joints are almost always the culprit, because a bolted interface is the one thing a finite-element model cannot represent from first principles. Its stiffness depends on preload, surface finish and how the parts actually seat, and it is fitted from test data rather than derived.",
+      "My five months covered building both the digital and the physical model, designing the fixture, and getting the assembly instrumented and onto the shaker. I handed the campaign over at the correlation stage, and the team carried the final model-tuning forward from there — so the measured-versus-predicted frequencies are their result to report, not mine.",
+      "Stopping there is worth being explicit about. The value of what I built is not a correlation number I can quote; it is that the model and the hardware were made to describe the same object closely enough that the comparison would be meaningful when it was made.",
     ],
     layout: "text-only",
     tags: ["Correlation", "Model Updating", "Validation"],
@@ -155,7 +158,7 @@ export const epflSpacecraftChapters: Chapter[] = [
     kicker: "12 — Result",
     title: "One satellite, described twice, ready to trust",
     body: [
-      "In five months the project went from a near-frozen flight design to two matched descriptions of the same satellite — a finite-element model that predicts how CHESS rings, and a machined, assembled mass model that survives the shaker — plus the fixture, instrumentation and test procedure the team can reuse when the real structure's turn comes.",
+      "In five months the project went from a near-frozen flight design to two matched descriptions of the same satellite — a finite-element model that predicts how CHESS rings, and a machined, assembled mass model ready to be shaken — plus the fixture, instrumentation plan and test procedure the team can reuse when the real structure's turn comes.",
       "It is a compact, complete slice of structural engineering: read a design, predict its behaviour, build the hardware, test it against launch loads, and compare reality back to the model.",
     ],
     layout: "text-only",
