@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WhatsApp (mock harness)</title>
+<style>
+  body{margin:0;font:14px/1.4 system-ui,sans-serif;display:flex;height:100vh;background:#111b21;color:#e9edef}
+  #side{width:320px;border-right:1px solid #2a3942;display:flex;flex-direction:column}
+  #searchwrap{padding:8px;border-bottom:1px solid #2a3942}
+  #searchwrap div[contenteditable]{background:#202c33;padding:8px;border-radius:8px;min-height:20px}
+  #pane-side{flex:1;overflow-y:scroll;position:relative}
+  .chatrow{height:72px;padding:8px 12px;border-bottom:1px solid #202c33;cursor:pointer;box-sizing:border-box}
+  .chatrow.sel{background:#2a3942}
+  #main{flex:1;display:flex;flex-direction:column}
+  header{padding:12px;border-bottom:1px solid #2a3942;background:#202c33}
+  #msgscroll{flex:1;overflow-y:scroll;padding:12px;position:relative}
+  #spacer{position:relative}
+  .message-in,.message-out{display:inline-block;max-width:70%;padding:6px 9px;border-radius:8px;background:#202c33;margin:2px 0}
+  .message-out{background:#005c4b;float:right;clear:both}
+  .message-in{float:left;clear:both}
+  div[role="row"]{overflow:hidden;padding:1px 0}
+  .date-divider,.system{text-align:center;clear:both}
+  .date-divider span,.system span{background:#182229;color:#8696a0;font-size:12px;padding:4px 10px;border-radius:8px;display:inline-block}
+  .meta{font-size:11px;color:#8696a0;text-align:right;margin-top:2px}
+  img.emoji{width:16px;height:16px;vertical-align:-3px}
+  .thumb{display:block;max-width:200px;border-radius:6px}
+  #loader{text-align:center;padding:8px;color:#8696a0;display:none}
+</style>
+</head>
+<body>
+<div id="side">
+  <div id="searchwrap"><div contenteditable="true" data-tab="3" role="textbox"></div></div>
+  <div id="pane-side"></div>
+</div>
+<div id="main">
+  <header><span title="">-</span></header>
+  <div id="msgscroll"><div id="loader" role="progressbar">loading older messages...</div><div id="spacer"></div></div>
+</div>
+<script>
+/* ---------------------------------------------------------------------------
+   A deliberately faithful stand-in for WhatsApp Web's two hard behaviours:
+     1. both lists are VIRTUALISED - only rows near the viewport exist
+     2. older history is LAZY - it arrives only after you hit the top
+   The DOM contract (ids, roles, data-id, copyable-text, data-pre-plain-text)
+   mirrors the real app so the production scraper runs unmodified.
+--------------------------------------------------------------------------- */
+var ROW_H = 64;
+var CHATS = ['Mama', 'Team / Projekt: Q3', 'Lisa \u2764\ufe0f', 'Papa', 'Uni Gruppe', 'Max Mustermann'];
+var SELF = 'Niklas';
+
+function pad(n){ return String(n).padStart(2,'0'); }
+
+/* Build a deterministic history: 420 messages over 14 days. */
+function buildHistory(chatName){
+  var msgs = [];
+  var day = 1;
+  var seq = 0;
+  var texts = [
+    'Hallo! Wie geht es dir?', 'Alles gut bei mir \u2600\ufe0f', 'Bis morgen dann',
+    'Kannst du das bitte pruefen?', 'Ja klar, mache ich', 'Was machst du gerade?',
+    'Ich bin unterwegs', 'Mehrzeilige Nachricht\nZweite Zeile\nDritte Zeile',
+    'Ok', 'Danke dir \uD83D\uDE00', 'Schau mal hier'
+  ];
+  for (var d = 0; d < 14; d++) {
+    var date = pad(d+1) + '/05/2024';
+    msgs.push({ kind:'date', text: date });
+    if (d === 0) msgs.push({ kind:'system', text:'Messages are end-to-end encrypted.' });
+    var perDay = 30;
+    for (var i = 0; i < perDay; i++) {
+      seq++;
+      var out = (i % 3 === 0);
+      var mins = i * 25;                       /* strictly increasing per day */
+      var time = pad(8 + Math.floor(mins / 60)) + ':' + pad(mins % 60);
+      var m = {
+        kind: 'msg',
+        id: (out ? 'true_' : 'false_') + '4915100000@c.us_' + chatName.slice(0,3).toUpperCase() + seq,
+        out: out,
+        sender: out ? SELF : chatName,
+        time: time,
+        date: date,
+        text: texts[seq % texts.length]
+      };
+      if (seq % 25 === 0) { m.media = 'image'; m.caption = (seq % 50 === 0) ? '' : 'Bild vom Wochenende'; }
+      if (seq % 37 === 0) { m.quoted = { author: out ? chatName : SELF, text: 'Vorherige Nachricht' }; }
+      if (seq % 41 === 0) { m.reactions = ['\uD83D\uDC4D 2']; }
+      msgs.push(m);
+    }
+  }
+  return msgs;
+}
+
+var HISTORY = {};
+CHATS.forEach(function(c){ HISTORY[c] = buildHistory(c); });
+</script>
+<script>
+/* ---- extra chats so the chat list actually needs scrolling ---------------- */
+for (var ci = 1; ci <= 34; ci++) CHATS.push('Kontakt ' + ci);
+function getHistory(name){
+  if (!HISTORY[name]) HISTORY[name] = buildHistory(name).slice(-40);
+  return HISTORY[name];
+}
+
+/* ---- a real blob: URL, so blob capture is exercised too ------------------- */
+var BLOB_URL = '';
+(function(){
+  var c = document.createElement('canvas'); c.width = 160; c.height = 120;
+  var ctx = c.getContext('2d');
+  ctx.fillStyle = '#44aa99'; ctx.fillRect(0, 0, 160, 120);
+  ctx.fillStyle = '#fff'; ctx.font = '18px sans-serif'; ctx.fillText('photo', 45, 66);
+  c.toBlob(function(b){ BLOB_URL = URL.createObjectURL(b); renderWindow(); }, 'image/png');
+})();
+
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+var EMOJI_IMG = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+function bodyHtml(text){
+  var h = esc(text).replace(/\n/g, '<br>');
+  /* WhatsApp swaps emoji for <img alt="..."> - the scraper must read the alt */
+  h = h.replace(/\uD83D\uDE00/g, '<img class="emoji" alt="\uD83D\uDE00" src="' + EMOJI_IMG + '">');
+  return h;
+}
+
+function rowHtml(m, top){
+  var style = 'position:absolute;top:' + top + 'px;left:0;right:0;height:' + ROW_H + 'px';
+  if (m.kind === 'date')
+    return '<div role="row" style="'+style+'"><div class="date-divider"><span>'+esc(m.text)+'</span></div></div>';
+  if (m.kind === 'system')
+    return '<div role="row" style="'+style+'"><div class="system"><span>'+esc(m.text)+'</span></div></div>';
+
+  var cls = m.out ? 'message-out' : 'message-in';
+  var pre = '[' + m.time + ', ' + m.date + '] ' + m.sender + ': ';
+  var inner = '';
+  if (m.quoted) {
+    inner += '<div aria-label="Quoted message"><span dir="auto">' + esc(m.quoted.author) +
+             '</span><span dir="auto">' + esc(m.quoted.text) + '</span></div>';
+  }
+  if (m.media === 'image') {
+    inner += '<img class="thumb" src="' + BLOB_URL + '">';
+    if (m.caption) {
+      inner += '<div class="copyable-text" data-pre-plain-text="' + esc(pre) + '">' +
+               '<span class="selectable-text copyable-text"><span>' + bodyHtml(m.caption) + '</span></span></div>';
+    }
+  } else {
+    inner += '<div class="copyable-text" data-pre-plain-text="' + esc(pre) + '">' +
+             '<span class="selectable-text copyable-text"><span>' + bodyHtml(m.text) + '</span></span></div>';
+  }
+  inner += '<div class="meta"><span>' + m.time + '</span><span data-icon="msg-dblcheck"></span></div>';
+  if (m.reactions) {
+    inner += '<div aria-label="reaction ' + esc(m.reactions[0]) + '"><span>' + esc(m.reactions[0]) + '</span></div>';
+  }
+  return '<div role="row" style="' + style + '"><div class="' + cls + '" data-id="' + esc(m.id) + '">' + inner + '</div></div>';
+}
+
+/* ---- message pane: virtualised window + lazy older history --------------- */
+var state = { chat: null, all: [], start: 0, loading: false };
+var scEl = document.getElementById('msgscroll');
+var spacer = document.getElementById('spacer');
+var loader = document.getElementById('loader');
+
+function renderWindow(){
+  if (!state.chat) return;
+  var loaded = state.all.slice(state.start);
+  spacer.style.height = (loaded.length * ROW_H) + 'px';
+  var first = Math.max(0, Math.floor(scEl.scrollTop / ROW_H) - 6);
+  var last = Math.min(loaded.length, Math.ceil((scEl.scrollTop + scEl.clientHeight) / ROW_H) + 6);
+  var html = [];
+  for (var i = first; i < last; i++) html.push(rowHtml(loaded[i], i * ROW_H));
+  spacer.innerHTML = html.join('');
+}
+
+function loadOlder(){
+  if (state.loading || state.start <= 0) return;
+  state.loading = true;
+  loader.style.display = 'block';
+  setTimeout(function(){
+    var grow = Math.min(100, state.start);
+    state.start -= grow;
+    var keep = scEl.scrollTop;
+    renderWindow();
+    scEl.scrollTop = keep + grow * ROW_H;   /* keep the reading position */
+    loader.style.display = 'none';
+    state.loading = false;
+  }, 450);
+}
+
+scEl.addEventListener('scroll', function(){
+  renderWindow();
+  if (scEl.scrollTop < 250) loadOlder();
+});
+
+function openChatMock(name){
+  state.chat = name;
+  state.all = getHistory(name);
+  state.start = Math.max(0, state.all.length - 150);
+  var t = document.querySelector('#main header span');
+  t.setAttribute('title', name);
+  t.textContent = name;
+  renderWindow();
+  scEl.scrollTop = scEl.scrollHeight;
+  renderWindow();
+}
+
+/* ---- chat list: virtualised too ------------------------------------------ */
+var pane = document.getElementById('pane-side');
+var chatSpacer = document.createElement('div');
+chatSpacer.style.position = 'relative';
+pane.appendChild(chatSpacer);
+var CHAT_H = 72;
+
+/* ?shape=grid renders the chat list the way newer WhatsApp builds do:
+   role="grid" > role="row" > role="gridcell", instead of role="listitem".
+   ?blocked=1 reproduces the "WhatsApp is open in another window" screen. */
+var PARAMS = new URLSearchParams(location.search);
+var SHAPE = PARAMS.get('shape') || 'listitem';
+var BLOCKED = PARAMS.get('blocked') === '1';
+if (SHAPE === 'grid') {
+  chatSpacer.setAttribute('role', 'grid');
+  chatSpacer.setAttribute('aria-label', 'Chat list');
+}
+if (BLOCKED) {
+  var ov = document.createElement('div');
+  ov.id = 'blockov';
+  ov.style.cssText = 'position:fixed;inset:0;background:#0b141a;z-index:99;display:flex;' +
+    'flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#e9edef';
+  var msg = document.createElement('div');
+  msg.textContent = 'WhatsApp is open in another window. Click "Use here" to use WhatsApp in this window.';
+  var useBtn = document.createElement('button');
+  useBtn.textContent = 'Use here';
+  useBtn.style.cssText = 'padding:8px 18px;border:0;border-radius:6px;background:#00a884;color:#fff;cursor:pointer';
+  useBtn.onclick = function () { BLOCKED = false; ov.remove(); renderChatList(); };
+  ov.appendChild(msg); ov.appendChild(useBtn);
+  document.body.appendChild(ov);
+}
+
+function visibleChats(){
+  var box = document.querySelector('#searchwrap div[contenteditable]');
+  var f = (box.textContent || '').trim().toLowerCase();
+  return CHATS.filter(function(c){ return !f || c.toLowerCase().indexOf(f) !== -1; });
+}
+
+function renderChatList(){
+  if (BLOCKED) { chatSpacer.innerHTML = ''; chatSpacer.style.height = '0px'; return; }
+  var list = visibleChats();
+  chatSpacer.style.height = (list.length * CHAT_H) + 'px';
+  var first = Math.max(0, Math.floor(pane.scrollTop / CHAT_H) - 3);
+  var last = Math.min(list.length, Math.ceil((pane.scrollTop + pane.clientHeight) / CHAT_H) + 3);
+  var html = [];
+  for (var i = first; i < last; i++) {
+    var name = list[i];
+    var cell = '<div class="chatrow">' +
+        '<span title="' + esc(name) + '">' + esc(name) + '</span>' +
+        '<span title="letzte Nachricht">letzte Nachricht</span>' +
+        '<span>21:34</span>' +
+      '</div>';
+    var pos = 'position:absolute;top:' + (i * CHAT_H) + 'px;left:0;right:0;height:' + CHAT_H + 'px';
+    if (SHAPE === 'grid') {
+      html.push('<div role="row" aria-rowindex="' + (i + 1) + '" style="' + pos + '">' +
+                  '<div role="gridcell">' + cell + '</div></div>');
+    } else {
+      html.push('<div role="listitem" style="' + pos + '">' + cell + '</div>');
+    }
+  }
+  chatSpacer.innerHTML = html.join('');
+}
+
+pane.addEventListener('scroll', renderChatList);
+pane.addEventListener('click', function(ev){
+  var row = ev.target.closest ? ev.target.closest('div[role="listitem"], div[role="row"]') : null;
+  if (!row) return;
+  var t = row.querySelector('span[title]');
+  if (t) openChatMock(t.getAttribute('title'));
+});
+document.querySelector('#searchwrap div[contenteditable]').addEventListener('input', function(){
+  pane.scrollTop = 0;
+  renderChatList();
+});
+
+renderChatList();
+
+</script>
+</body>
+</html>

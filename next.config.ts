@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // playwright-core drives a real Chrome for the local WhatsApp archive tool.
+  // It must not be bundled by Turbopack: it resolves browser binaries and
+  // transports through Node's own require at runtime.
+  serverExternalPackages: ["playwright-core"],
+
   async rewrites() {
     return [
       // Serve the static TC Baindt preview site's index at the clean folder URL.
