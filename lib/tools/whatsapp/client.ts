@@ -36,6 +36,35 @@ export interface ToolState {
   jobs: JobView[];
 }
 
+export interface OneDriveStatus {
+  configured: boolean;
+  linked: boolean;
+  account: string;
+  linkedAt: string | null;
+  source: "local" | "onedrive" | "none";
+}
+
+export interface PlannedChat {
+  name: string;
+  isGroup: boolean;
+  preview: string;
+  unread: number;
+  excluded: boolean;
+  archived: {
+    folder: string;
+    messages: number;
+    bytes: number;
+    lastDate: string | null;
+    lastBackupVersion: string;
+  } | null;
+}
+
+export interface ChatScanResult {
+  chats: PlannedChat[];
+  vanished: Array<{ name: string; messages: number; bytes: number }>;
+  scannedAt: string;
+}
+
 const BASE = "/api/tools/whatsapp";
 
 export class ToolError extends Error {
@@ -77,6 +106,13 @@ export const toolsApi = {
 
   startBackup: (params: { mode: "full" | "partial"; label?: string; chats?: string[]; media?: boolean }) =>
     api<JobView>("/backup", { method: "POST", body: JSON.stringify(params) }),
+  scanChats: () => api<JobView>("/chatlist", { method: "POST" }),
+
+  oneDriveStatus: () => api<OneDriveStatus>("/onedrive/status"),
+  oneDriveLink: () => api<{ url: string; redirectUri: string }>("/onedrive/link", { method: "POST" }),
+  oneDriveUnlink: () => api<{ linked: boolean }>("/onedrive/unlink", { method: "POST" }),
+  oneDriveSync: (force = false) =>
+    api<JobView>("/onedrive/sync", { method: "POST", body: JSON.stringify({ force }) }),
   job: (id: string) => api<JobView>(`/jobs/${encodeURIComponent(id)}`),
   cancelJob: (id: string) =>
     api<{ cancelled: boolean }>(`/jobs/${encodeURIComponent(id)}`, { method: "DELETE" }),

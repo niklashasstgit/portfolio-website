@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { toolsApi, type WhatsAppToolSettings } from "@/lib/tools/whatsapp/client";
+import OneDrivePanel from "./OneDrivePanel";
+import { toolsApi, type OneDriveStatus, type WhatsAppToolSettings } from "@/lib/tools/whatsapp/client";
 
 /** Where the archive lives and how sweeps behave. */
 export default function SettingsPane({
   settings,
+  oneDrive,
   onSaved,
 }: {
   settings: WhatsAppToolSettings;
+  oneDrive: OneDriveStatus;
   onSaved: (next: WhatsAppToolSettings) => void;
 }) {
   const [draft, setDraft] = useState<WhatsAppToolSettings>(settings);
@@ -43,6 +46,8 @@ export default function SettingsPane({
 
   return (
     <div className="max-w-2xl space-y-5">
+      <OneDrivePanel initial={oneDrive} />
+
       <section className="rounded-2xl border border-line bg-bg-raised p-5">
         <h2 className="text-base font-semibold text-fg">Where backups are stored</h2>
         <p className="mt-1 text-sm text-fg-muted">

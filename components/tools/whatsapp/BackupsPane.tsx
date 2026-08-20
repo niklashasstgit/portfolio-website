@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import BatchPlanner from "./BatchPlanner";
 import {
   streamJob,
   toolsApi,
@@ -123,8 +124,10 @@ export default function BackupsPane({
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
       <div className="space-y-4">
+        <BatchPlanner onArchiveChanged={onArchiveChanged} />
+
         <section className="rounded-2xl border border-line bg-bg-raised p-5">
-          <h2 className="text-base font-semibold text-fg">Run a backup</h2>
+          <h2 className="text-base font-semibold text-fg">Run everything at once</h2>
           <p className="mt-1 text-sm text-fg-muted">
             Both kinds write into the same archive and neither ever deletes anything. An update
             simply stops as soon as it reaches messages you already have.

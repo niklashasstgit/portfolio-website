@@ -11,7 +11,7 @@ import { readToolSettings } from "./settings";
  * window and lose the job you were watching.
  */
 
-export type JobKind = "backup" | "chats" | "session";
+export type JobKind = "backup" | "chats" | "session" | "sync";
 export type JobState = "queued" | "running" | "done" | "failed" | "cancelled";
 
 export interface JobEvent {

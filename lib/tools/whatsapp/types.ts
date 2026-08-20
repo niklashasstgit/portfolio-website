@@ -107,6 +107,11 @@ export interface ChatIndexEntry {
   presentInLatest: boolean;
   lastMessagePreview: string;
   lastMessageMs: number;
+  /** Bytes on disk for this chat's folder (transcript + exports + media).
+      Only knowable after a chat has been read once. */
+  bytes: number;
+  /** Version id of the run that last wrote this chat. */
+  lastBackupVersion: string;
 }
 
 export interface ArchiveIndex {

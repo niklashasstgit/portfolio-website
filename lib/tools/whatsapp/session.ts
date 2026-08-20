@@ -112,6 +112,15 @@ export class WhatsAppSession {
     }
 
     if (!this.context) {
+      // A previous run's browser still holding the profile is the most common
+      // failure here, and the raw error says nothing useful about it.
+      const raw = lastError?.message ?? "";
+      if (/ProcessSingleton|profile (is )?in use|SingletonLock|cannot create default profile/i.test(raw)) {
+        throw new Error(
+          "the browser profile is still open from a previous run - close the Chrome window " +
+            "this tool opened (or end its chrome.exe) and try again. Your WhatsApp link is safe."
+        );
+      }
       const message = lastError?.message.split("\n")[0] ?? "unknown error";
       const hint = /Executable doesn't exist|not found/i.test(lastError?.message ?? "")
         ? " — install Google Chrome, or run: npx playwright install chromium"

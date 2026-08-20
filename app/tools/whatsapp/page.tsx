@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import WhatsAppTool from "@/components/tools/whatsapp/WhatsAppTool";
-import { isLocalRuntime, readToolSettings } from "@/lib/tools/whatsapp/settings";
-import { ensureArchive, readIndex } from "@/lib/tools/whatsapp/vault";
+import { readToolSettings } from "@/lib/tools/whatsapp/settings";
+import { ensureArchive } from "@/lib/tools/whatsapp/vault";
+import { loadIndex, resolveSource } from "@/lib/tools/whatsapp/source";
+import { isOneDriveConfigured, readToken } from "@/lib/tools/whatsapp/onedrive/auth";
 import { peekSession } from "@/lib/tools/whatsapp/runtime";
 import { isToolsAuthed } from "@/lib/tools/auth";
 
@@ -24,11 +26,22 @@ export default async function WhatsAppToolPage() {
   // the RSC payload for anyone who requests the URL. Verified by test.
   if (!(await isToolsAuthed())) return null;
 
-  const local = isLocalRuntime();
-  const settings = local ? await readToolSettings() : null;
-
+  // Local disk when running on your machine; the OneDrive app folder when the
+  // deployed site is serving it; nothing at all if neither is available.
+  const source = await resolveSource();
+  const settings = source === "local" ? await readToolSettings() : null;
   if (settings) await ensureArchive(settings.archiveRoot);
-  const index = settings ? await readIndex(settings.archiveRoot) : null;
+
+  const { index } = source === "none" ? { index: null } : await loadIndex();
+  const odToken = isOneDriveConfigured() ? await readToken() : null;
+  const oneDrive = {
+    configured: isOneDriveConfigured(),
+    linked: !!odToken,
+    account: odToken?.account ?? "",
+    linkedAt: odToken?.linkedAt ?? null,
+    source,
+  };
+
   const live = peekSession();
   const session = live ? await live.status() : { running: false, loggedIn: false };
 
@@ -47,18 +60,20 @@ export default async function WhatsAppToolPage() {
         </Link>
       </div>
 
-      {settings && index ? (
-        <WhatsAppTool initial={{ settings, index, session }} />
+      {index ? (
+        <WhatsAppTool
+          initial={{ settings, index, session, readOnly: source === "onedrive", oneDrive }}
+        />
       ) : (
         <div className="rounded-2xl border border-line bg-bg-raised p-8 text-center">
-          <h3 className="text-base font-semibold text-fg">This tool runs on your own machine</h3>
+          <h3 className="text-base font-semibold text-fg">Nothing to read here yet</h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-fg-muted">
-            It drives a real browser and writes to a real disk, so it needs to run locally. Your
-            archive never leaves your computer.
+            Backups run on your own machine — they drive a real browser and write to a real disk.
+            Link OneDrive there and this page will serve the archive from it on any device.
           </p>
           <p className="mx-auto mt-3 max-w-md text-xs text-fg-muted">
-            Start the site with <code className="text-fg">npm run dev</code> and open{" "}
-            <code className="text-fg">/tools/whatsapp</code> there.
+            On your machine: <code className="text-fg">npm run dev</code> →{" "}
+            <code className="text-fg">/tools/whatsapp</code> → Settings → OneDrive.
           </p>
         </div>
       )}

@@ -1,9 +1,6 @@
-import { createReadStream, promises as fs } from "fs";
 import path from "path";
-import { Readable } from "stream";
 import { guardToolsRequest } from "@/lib/tools/whatsapp/guard";
-import { readToolSettings } from "@/lib/tools/whatsapp/settings";
-import { chatDir, MEDIA_DIR } from "@/lib/tools/whatsapp/vault";
+import { loadMedia } from "@/lib/tools/whatsapp/source";
 
 export const dynamic = "force-dynamic";
 
@@ -19,33 +16,24 @@ const TYPES: Record<string, string> = {
   ".pdf": "application/pdf",
 };
 
-/** Serve one captured thumbnail out of the archive. */
+/** Serve one captured thumbnail, from disk or OneDrive. */
 export async function GET(
   _request: Request,
   ctx: { params: Promise<{ folder: string; file: string }> }
 ) {
-  const denied = await guardToolsRequest();
+  const denied = await guardToolsRequest({ requireLocal: false });
   if (denied) return denied;
 
   const { folder, file } = await ctx.params;
-  const settings = await readToolSettings();
-
-  // basename() so a crafted name cannot climb out of the media folder
   const safe = path.basename(decodeURIComponent(file));
-  const full = path.join(chatDir(settings.archiveRoot, decodeURIComponent(folder)), MEDIA_DIR, safe);
+  const found = await loadMedia(decodeURIComponent(folder), safe);
+  if (!found) return Response.json({ error: "not found" }, { status: 404 });
 
-  try {
-    const stat = await fs.stat(full);
-    if (!stat.isFile()) throw new Error("not a file");
-    const stream = Readable.toWeb(createReadStream(full)) as ReadableStream;
-    return new Response(stream, {
-      headers: {
-        "Content-Type": TYPES[path.extname(safe).toLowerCase()] ?? "application/octet-stream",
-        "Content-Length": String(stat.size),
-        "Cache-Control": "private, max-age=3600",
-      },
-    });
-  } catch {
-    return Response.json({ error: "not found" }, { status: 404 });
-  }
+  return new Response(new Uint8Array(found.body), {
+    headers: {
+      "Content-Type": TYPES[path.extname(safe).toLowerCase()] ?? "application/octet-stream",
+      "Content-Length": String(found.size),
+      "Cache-Control": "private, max-age=3600",
+    },
+  });
 }

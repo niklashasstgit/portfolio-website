@@ -234,6 +234,26 @@ if (BLOCKED) {
   document.body.appendChild(ov);
 }
 
+
+/* The "Archived" entry: a real row in #pane-side that is NOT a conversation.
+   No span[title], just a label and a count - opening it navigates away. */
+var archivedRow = null;
+function renderArchivedRow(){
+  if (archivedRow) return;
+  archivedRow = document.createElement('div');
+  archivedRow.setAttribute('role', SHAPE === 'grid' ? 'row' : 'listitem');
+  archivedRow.style.cssText = 'height:56px;padding:10px 12px;border-bottom:1px solid #202c33;cursor:pointer';
+  archivedRow.innerHTML = '<span data-icon="archived"></span><span dir="auto">Archived</span>' +
+                          '<span dir="auto">7</span>';
+  archivedRow.addEventListener('click', function(){
+    /* mimic navigating into the archived sub-view */
+    document.body.innerHTML = '<div id="side"><header><span dir="auto">Archived</span></header></div>';
+  });
+  pane.insertBefore(archivedRow, chatSpacer);
+}
+
+function renderChatList2(){}
+
 function visibleChats(){
   var box = document.querySelector('#searchwrap div[contenteditable]');
   var f = (box.textContent || '').trim().toLowerCase();
@@ -242,6 +262,7 @@ function visibleChats(){
 
 function renderChatList(){
   if (BLOCKED) { chatSpacer.innerHTML = ''; chatSpacer.style.height = '0px'; return; }
+  renderArchivedRow();
   var list = visibleChats();
   chatSpacer.style.height = (list.length * CHAT_H) + 'px';
   var first = Math.max(0, Math.floor(pane.scrollTop / CHAT_H) - 3);

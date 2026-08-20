@@ -36,6 +36,7 @@ interface ScraperApi {
   clickLoadMore(): string | false;
   clickUseHere(): string | false;
   clearSearch(): string | false;
+  leaveSubView(): string | false;
   fetchBlob(url: string): Promise<{ ok: boolean; dataUrl: string; mime: string; size: number }>;
   diagnose(): {
     loggedIn: boolean;
@@ -133,6 +134,36 @@ export async function listChats(
   return [...found.values()].slice(0, limit);
 }
 
+/** Chat titles carry bidi marks and odd spacing; compare them forgivingly. */
+function sameName(a: string | null | undefined, b: string | null | undefined): boolean {
+  const norm = (v: string | null | undefined) =>
+    String(v ?? "")
+      .replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, "")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+  return !!norm(a) && norm(a) === norm(b);
+}
+
+/**
+ * Put the side panel back into a known state: no sub-view, no search filter.
+ * Called between chats so one awkward chat cannot strand the whole run - which
+ * is exactly what happened when the "Archived" row was opened as if it were a
+ * conversation.
+ */
+export async function resetToChatList(session: WhatsAppSession): Promise<void> {
+  const page = session.activePage;
+  await session.ensureScraper();
+  await page.keyboard.press("Escape").catch(() => {});
+  await page
+    .evaluate(() => (window as unknown as WinWithScraper).__WCE.leaveSubView())
+    .catch(() => false);
+  await page
+    .evaluate(() => (window as unknown as WinWithScraper).__WCE.clearSearch())
+    .catch(() => false);
+  await sleep(page, 350);
+}
+
 async function searchBox(page: Page) {
   const selectors = [
     '#side div[contenteditable="true"][data-tab]',
@@ -174,7 +205,7 @@ export async function openChat(session: WhatsAppSession, name: string) {
   const page = session.activePage;
   await session.ensureScraper();
 
-  if ((await currentChatName(page)) === name) {
+  if (sameName(await currentChatName(page), name)) {
     return page.evaluate(() => (window as unknown as WinWithScraper).__WCE.currentChat());
   }
 
@@ -187,7 +218,7 @@ export async function openChat(session: WhatsAppSession, name: string) {
       await box.pressSequentially(name, { delay: 12 });
       await sleep(page, 900);
       if (await clickRow(page, name)) {
-        if ((await currentChatName(page)) === name) {
+        if (sameName(await currentChatName(page), name)) {
           await page.keyboard.press("Escape").catch(() => {});
           return page.evaluate(() => (window as unknown as WinWithScraper).__WCE.currentChat());
         }
@@ -199,11 +230,14 @@ export async function openChat(session: WhatsAppSession, name: string) {
     }
   }
 
+  // Escape does not always clear WhatsApp's search box; scanning a still
+  // filtered list is how a present chat reports as "not found".
+  await resetToChatList(session);
   await page.evaluate(() => (window as unknown as WinWithScraper).__WCE.scrollChatList({ top: true }));
   await sleep(page, 350);
   for (let round = 0; round < 400; round++) {
     if (await clickRow(page, name)) {
-      if ((await currentChatName(page)) === name) {
+      if (sameName(await currentChatName(page), name)) {
         return page.evaluate(() => (window as unknown as WinWithScraper).__WCE.currentChat());
       }
     }

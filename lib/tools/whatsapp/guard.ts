@@ -15,17 +15,23 @@ import { isLocalRuntime } from "./settings";
  *
  * Returns a Response to send back, or null when the caller may proceed.
  */
-export async function guardToolsRequest(): Promise<Response | null> {
+export async function guardToolsRequest(
+  opts: { requireLocal?: boolean } = {}
+): Promise<Response | null> {
   const cookieStore = await cookies();
   const authed = await verifySessionToken(cookieStore.get(ADMIN_COOKIE)?.value);
   if (!authed) {
     return Response.json({ error: "Not signed in." }, { status: 401 });
   }
-  if (!isLocalRuntime()) {
+
+  // Reading is allowed anywhere the archive can be reached — on the deployed
+  // site that means the OneDrive app folder. Only the parts that drive a
+  // browser or write to disk truly require a local runtime.
+  if (opts.requireLocal !== false && !isLocalRuntime()) {
     return Response.json(
       {
         error:
-          "This tool only runs on your own machine — it needs a real browser and local disk access.",
+          "Backups run on your own machine — they need a real browser and local disk access.",
         code: "not-local",
       },
       { status: 503 }
@@ -34,10 +40,23 @@ export async function guardToolsRequest(): Promise<Response | null> {
   return null;
 }
 
-/** Wrap a handler so both gates are always applied. */
+/** Wrap a handler that needs the browser/disk (backups, session, settings). */
 export function guarded(handler: (request: Request) => Promise<Response>) {
   return async (request: Request): Promise<Response> => {
     const denied = await guardToolsRequest();
+    if (denied) return denied;
+    try {
+      return await handler(request);
+    } catch (err) {
+      return Response.json({ error: (err as Error).message }, { status: 500 });
+    }
+  };
+}
+
+/** Wrap a read-only handler: signed in, but happy to serve from OneDrive. */
+export function guardedRead(handler: (request: Request) => Promise<Response>) {
+  return async (request: Request): Promise<Response> => {
+    const denied = await guardToolsRequest({ requireLocal: false });
     if (denied) return denied;
     try {
       return await handler(request);

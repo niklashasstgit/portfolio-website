@@ -9,6 +9,7 @@ import {
   type ArchiveIndex,
   type ArchiveVersion,
   type ChatIndexEntry,
+  type OneDriveStatus,
   type SessionState,
   type WhatsAppToolSettings,
 } from "@/lib/tools/whatsapp/client";
@@ -16,15 +17,20 @@ import {
 type Tab = "chats" | "backups" | "settings";
 
 export interface InitialToolState {
-  settings: WhatsAppToolSettings;
+  /** Null when reading a remote archive — settings only exist on the machine
+      that actually runs backups. */
+  settings: WhatsAppToolSettings | null;
   index: ArchiveIndex;
   session: SessionState;
+  /** True when serving the archive from OneDrive: viewing only. */
+  readOnly: boolean;
+  oneDrive: OneDriveStatus;
 }
 
 /** The archive arrives as props from the server component — no fetch on mount. */
 export default function WhatsAppTool({ initial }: { initial: InitialToolState }) {
   const [tab, setTab] = useState<Tab>("chats");
-  const [settings, setSettings] = useState<WhatsAppToolSettings>(initial.settings);
+  const [settings, setSettings] = useState<WhatsAppToolSettings | null>(initial.settings);
   const [chats, setChats] = useState<ChatIndexEntry[]>(initial.index.chats);
   const [versions, setVersions] = useState<Array<Omit<ArchiveVersion, "chats">>>(
     initial.index.versions
@@ -38,7 +44,7 @@ export default function WhatsAppTool({ initial }: { initial: InitialToolState })
   const refresh = useCallback(async () => {
     try {
       const state = await toolsApi.state();
-      setSettings(state.settings);
+      if (state.settings) setSettings(state.settings);
       setChats(state.index.chats);
       setVersions(state.index.versions);
       setTotals(state.index.totals);
@@ -112,12 +118,22 @@ export default function WhatsAppTool({ initial }: { initial: InitialToolState })
 
   return (
     <div className="space-y-5">
+      {initial.readOnly && (
+        <p className="rounded-xl border border-line bg-bg-raised px-4 py-2.5 text-xs text-fg-muted">
+          Reading your archive from OneDrive. Backups run on the machine with the browser — open
+          this page there to capture new messages.
+        </p>
+      )}
+
       <header className="flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-bg-raised px-4 py-3">
-        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />
-        <span className="flex-1 text-sm text-fg-muted">{sessionLabel}</span>
+        {!initial.readOnly && <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dot}`} />}
+        <span className="flex-1 text-sm text-fg-muted">
+          {initial.readOnly ? "Archive loaded from OneDrive" : sessionLabel}
+        </span>
         <span className="font-mono-tight text-[11px] text-fg-muted">
           {totals.chats} chats · {totals.messages.toLocaleString()} messages archived
         </span>
+        {!initial.readOnly && (
         <button
           onClick={toggleSession}
           disabled={busy}
@@ -125,6 +141,8 @@ export default function WhatsAppTool({ initial }: { initial: InitialToolState })
         >
           {session.running ? "Close browser" : "Link WhatsApp"}
         </button>
+        )}
+        {!initial.readOnly && (
         <button
           onClick={diagnose}
           disabled={busy}
@@ -132,6 +150,7 @@ export default function WhatsAppTool({ initial }: { initial: InitialToolState })
         >
           Diagnose
         </button>
+        )}
       </header>
 
       {notice && (
@@ -147,11 +166,13 @@ export default function WhatsAppTool({ initial }: { initial: InitialToolState })
 
       <nav className="flex gap-1 border-b border-line">
         {(
-          [
-            ["chats", `Chats${chats.length ? ` (${chats.length})` : ""}`],
-            ["backups", `Backups${versions.length ? ` (${versions.length})` : ""}`],
-            ["settings", "Settings"],
-          ] as [Tab, string][]
+          (initial.readOnly
+            ? [["chats", `Chats${chats.length ? ` (${chats.length})` : ""}`]]
+            : [
+                ["chats", `Chats${chats.length ? ` (${chats.length})` : ""}`],
+                ["backups", `Backups${versions.length ? ` (${versions.length})` : ""}`],
+                ["settings", "Settings"],
+              ]) as [Tab, string][]
         ).map(([key, label]) => (
           <button
             key={key}
@@ -168,10 +189,12 @@ export default function WhatsAppTool({ initial }: { initial: InitialToolState })
       </nav>
 
       {tab === "chats" && <ChatsPane chats={chats} versions={versions} />}
-      {tab === "backups" && (
+      {tab === "backups" && !initial.readOnly && (
         <BackupsPane versions={versions} onArchiveChanged={() => void refresh()} />
       )}
-      {tab === "settings" && <SettingsPane settings={settings} onSaved={setSettings} />}
+      {tab === "settings" && !initial.readOnly && settings && (
+        <SettingsPane settings={settings} oneDrive={initial.oneDrive} onSaved={setSettings} />
+      )}
     </div>
   );
 }

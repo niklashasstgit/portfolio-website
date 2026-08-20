@@ -2,7 +2,7 @@
 import path from "path";
 import { readToolSettings } from "./settings";
 import { emit, getSession, type Job } from "./runtime";
-import { listChats, sweepChat } from "./extractor";
+import { listChats, resetToChatList, sweepChat } from "./extractor";
 import { normalize } from "./normalize";
 import { writeExports } from "./exports";
 import { versionId as makeVersionId } from "./dates";
@@ -72,6 +72,11 @@ export async function runBackup(job: Job, params: BackupParams): Promise<Archive
     const chat = targets[i];
 
     emit(job, { phase: "chat-start", title: chat.name, index: i + 1, total: targets.length });
+
+    // Leave the side panel on the plain, unfiltered chat list before every
+    // chat. Without this, one chat that navigates elsewhere makes every later
+    // chat report "not found in the chat list".
+    await resetToChatList(session).catch(() => {});
 
     const entry: VersionChatEntry = {
       title: chat.name,
@@ -145,10 +150,11 @@ export async function runBackup(job: Job, params: BackupParams): Promise<Archive
       vault.recomputeStats(archive);
 
       await vault.writeChat(root, archive);
-      await vault.upsertIndexEntry(root, archive);
       if (settings.exports) {
         await writeExports(path.join(vault.chatsPath(root), folder), archive);
       }
+      // measured after the exports exist, so the figure reflects the real cost
+      await vault.upsertIndexEntry(root, archive, await vault.folderBytes(root, folder));
 
       entry.added = merged.added;
       entry.updated = merged.updated;
@@ -193,6 +199,25 @@ export async function runBackup(job: Job, params: BackupParams): Promise<Archive
   version.status = job.cancel.cancelled ? "cancelled" : "complete";
   version.finishedAt = new Date().toISOString();
   await vault.writeVersion(root, version);
+
+  // Mirror to OneDrive if it is linked, so the deployed site can read what was
+  // just captured. Kept out of the sweep loop on purpose: a network hiccup
+  // should never cost a backup that already succeeded.
+  try {
+    const { readToken } = await import("./onedrive/auth");
+    if (await readToken()) {
+      emit(job, { phase: "sync-start", root });
+      const { syncArchiveUp } = await import("./onedrive/sync");
+      const result = await syncArchiveUp(root, {
+        signal: job.cancel,
+        onProgress: (p) =>
+          emit(job, { phase: "sync-progress", uploaded: p.uploaded, total: p.total, current: p.current }),
+      });
+      emit(job, { phase: "sync-done", uploaded: result.uploaded, skipped: result.skipped, failed: result.failed.length });
+    }
+  } catch (err) {
+    emit(job, { phase: "sync-failed", error: (err as Error).message });
+  }
 
   emit(job, { phase: "finished", version: version.id, totals: version.totals });
   return version;

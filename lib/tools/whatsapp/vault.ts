@@ -155,7 +155,34 @@ export async function saveMedia(
   return `${MEDIA_DIR}/${file}`;
 }
 
-export function indexEntryFor(archive: ChatArchive): ChatIndexEntry {
+/** Total bytes under a chat's folder — transcript, exports and media. */
+export async function folderBytes(root: string, folder: string): Promise<number> {
+  const dir = chatDir(root, folder);
+  let total = 0;
+  const walk = async (current: string): Promise<void> => {
+    let entries;
+    try {
+      entries = await fs.readdir(current, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      const full = path.join(current, entry.name);
+      if (entry.isDirectory()) await walk(full);
+      else {
+        try {
+          total += (await fs.stat(full)).size;
+        } catch {
+          /* file vanished mid-walk */
+        }
+      }
+    }
+  };
+  await walk(dir);
+  return total;
+}
+
+export function indexEntryFor(archive: ChatArchive, bytes = 0): ChatIndexEntry {
   const last = [...archive.messages].reverse().find((m) => m.kind === "message");
   return {
     folder: archive.folder,
@@ -170,6 +197,8 @@ export function indexEntryFor(archive: ChatArchive): ChatIndexEntry {
     presentInLatest: archive.presentInLatest,
     lastMessagePreview: last ? (last.text || `[${last.media?.type ?? "media"}]`).slice(0, 90) : "",
     lastMessageMs: last?.ts?.ms ?? 0,
+    bytes,
+    lastBackupVersion: archive.lastSeen,
   };
 }
 
@@ -366,9 +395,14 @@ export async function markPresence(
   return { vanished };
 }
 
-export async function upsertIndexEntry(root: string, archive: ChatArchive): Promise<void> {
+export async function upsertIndexEntry(
+  root: string,
+  archive: ChatArchive,
+  bytes?: number
+): Promise<void> {
   const index = await readIndex(root);
-  const entry = indexEntryFor(archive);
+  const measured = bytes ?? (await folderBytes(root, archive.folder));
+  const entry = indexEntryFor(archive, measured);
   const at = index.chats.findIndex((c) => c.folder === archive.folder);
   if (at >= 0) index.chats[at] = entry;
   else index.chats.push(entry);
