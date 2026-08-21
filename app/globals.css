@@ -95,6 +95,27 @@ body {
   display: none;
 }
 
+/* slim rail scrollbar — used by the scroll-story chapter nav, which scrolls
+   independently of the page when a story has more chapters than fit. */
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+.thin-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 3px;
+}
+.thin-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: var(--color-line-strong);
+}
+
 .font-mono-tight {
   font-family: var(--font-geist-mono), monospace;
   letter-spacing: 0.02em;

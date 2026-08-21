@@ -113,9 +113,18 @@ export default function CategoryRow({ projects }: { projects: ProjectMeta[] }) {
 
   return (
     <div ref={wrapRef}>
+      {/*
+        touch-action must allow pan-y as well as pan-x: with `pan-x` alone the
+        browser swallows vertical swipes that start on a card, so the page can't
+        be scrolled from anywhere inside the row. Allowing both lets the browser
+        pick the dominant axis, which is the native carousel behaviour.
+        overscroll-behavior-x still stops horizontal scroll chaining, and
+        snap-proximity (rather than mandatory) keeps the snap from fighting both
+        the auto-scroll and a user's vertical drag.
+      */}
       <div
         ref={scrollerRef}
-        className="mt-5 flex snap-x snap-mandatory gap-6 overflow-x-auto overflow-y-hidden pb-4 [overscroll-behavior-x:contain] [touch-action:pan-x]"
+        className="mt-5 flex snap-x snap-proximity gap-6 overflow-x-auto overflow-y-hidden pb-4 [overscroll-behavior-x:contain] [touch-action:pan-x_pan-y_pinch-zoom]"
       >
         {ordered.map((p) => (
           <div data-reveal key={p.slug} className="w-96 flex-shrink-0 snap-center">

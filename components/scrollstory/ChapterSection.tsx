@@ -69,7 +69,7 @@ export default function ChapterSection({
       id={chapter.id}
       ref={rootRef}
       data-chapter={index}
-      className="scroll-mt-24 border-b border-line py-20 first:pt-4 last:border-b-0 sm:py-28"
+      className="scroll-mt-32 border-b border-line py-20 first:pt-4 last:border-b-0 sm:py-28 lg:scroll-mt-24"
     >
       <div
         className={

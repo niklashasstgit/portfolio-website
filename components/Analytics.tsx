@@ -4,6 +4,33 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 const VID_KEY = "nb.vid.v1";
+const VIA_KEY = "nb.via.v1";
+
+/**
+ * Share-link attribution.
+ *
+ * A tracked link is any URL carrying `?via=<code>` (codes are created in /admin).
+ * The code is stored on first arrival so every *later* page view from this
+ * browser stays attributed to the link that brought them in — otherwise only the
+ * landing page would carry the flag and the rest of the session would look
+ * organic. Returns "" when the visitor never came through a tracked link.
+ */
+function shareCode(): string {
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get("via");
+    if (fromUrl) {
+      const code = fromUrl.slice(0, 32);
+      // Only remember plausible codes — never echo arbitrary query junk back.
+      if (/^[A-Za-z0-9_-]{4,32}$/.test(code)) {
+        localStorage.setItem(VIA_KEY, code);
+        return code;
+      }
+    }
+    return localStorage.getItem(VIA_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
 
 /**
  * A stable, per-browser device id. Persisted in localStorage so it survives IP
@@ -43,6 +70,7 @@ export default function Analytics() {
         path: pathname,
         ref: document.referrer,
         vid: deviceId(),
+        via: shareCode(),
         // Best-effort client details — browser/OS/device type are re-derived
         // server-side from the UA header, these fill in what only the client knows.
         screen: `${screen.width}x${screen.height}`,

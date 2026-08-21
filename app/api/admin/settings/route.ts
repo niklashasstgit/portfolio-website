@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { ADMIN_COOKIE, verifySessionToken } from "@/lib/admin-auth";
 import { writeSettings } from "@/lib/site-settings-store";
-import type { IpLabel, ProjectOverride, SiteSettings } from "@/lib/site-settings";
+import type { IpLabel, ProjectOverride, ShareLink, SiteSettings } from "@/lib/site-settings";
 
 /**
  * Admin-gated settings write (cookie session, not the dev-console password).
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
     ipLabels?: unknown;
     deviceLabels?: unknown;
     excludedPrefixes?: unknown;
+    shareLinks?: unknown;
   };
   try {
     body = (await request.json()) as typeof body;
@@ -44,6 +45,9 @@ export async function POST(request: Request) {
   if ("excludedPrefixes" in body) {
     patch.excludedPrefixes = (body.excludedPrefixes ?? []) as string[];
   }
+  if ("shareLinks" in body) {
+    patch.shareLinks = (body.shareLinks ?? []) as ShareLink[];
+  }
 
   try {
     const saved = await writeSettings(patch);
@@ -54,6 +58,7 @@ export async function POST(request: Request) {
         ipLabels: saved.ipLabels,
         deviceLabels: saved.deviceLabels,
         excludedPrefixes: saved.excludedPrefixes,
+        shareLinks: saved.shareLinks,
       },
       { headers: { "Cache-Control": "no-store" } }
     );

@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { companyFrom, lookupIp, type IpInfo } from "@/lib/ip-intel";
 import { parseUserAgent } from "@/lib/ua-parse";
+import { readSettings } from "@/lib/site-settings-store";
 import {
   getCachedIpInfo,
   recordEvent,
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
       path?: unknown;
       ref?: unknown;
       vid?: unknown;
+      via?: unknown;
       screen?: unknown;
       viewport?: unknown;
       language?: unknown;
@@ -59,6 +61,23 @@ export async function POST(request: Request) {
     if (path.startsWith("/admin")) return new Response(null, { status: 204 });
     const ref = (typeof body.ref === "string" ? body.ref : "").slice(0, 300);
     const vid = (typeof body.vid === "string" ? body.vid : "").slice(0, 64);
+
+    // Share-link attribution: resolve the opaque ?via= code to its admin-facing
+    // name here, so the dashboard stays readable even if the link is later
+    // renamed or deleted. An unknown code is recorded but left unnamed rather
+    // than dropped — that way a stale link still shows up as real traffic.
+    const rawVia = (typeof body.via === "string" ? body.via : "").slice(0, 32);
+    const via = /^[A-Za-z0-9_-]{4,32}$/.test(rawVia) ? rawVia : "";
+    let viaName = "";
+    if (via) {
+      try {
+        const { shareLinks } = await readSettings();
+        viaName = shareLinks.find((l) => l.code === via)?.name ?? "";
+      } catch {
+        // Settings unavailable — keep the code, skip the name.
+      }
+    }
+
     const { browser, os, deviceType } = parseUserAgent(ua);
 
     const ip = clientIp(h);
@@ -76,6 +95,8 @@ export async function POST(request: Request) {
       path,
       ref,
       vid,
+      via,
+      viaName,
       ip: ip || "unknown",
       city: info?.city ?? "",
       region: info?.region ?? "",

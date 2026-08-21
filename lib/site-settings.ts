@@ -46,6 +46,24 @@ export type IpLabel = {
   excluded?: boolean;
 };
 
+/**
+ * A named, trackable share link. The visitor never sees the name — only the
+ * opaque `code`, appended to any URL as `?via=<code>`. When someone arrives
+ * through it, the beacon records the code and the admin dashboard resolves it
+ * back to this name, so a link sent to a specific company/recruiter can be told
+ * apart from organic traffic. Created from /admin.
+ */
+export type ShareLink = {
+  /** Short opaque code that travels in the URL. */
+  code: string;
+  /** Human label shown only in the admin dashboard. */
+  name: string;
+  /** Path the link lands on, e.g. "/" or "/projects/visual-sky-radar". */
+  target: string;
+  /** epoch ms */
+  createdAt: number;
+};
+
 export type SiteSettings = {
   /** Editable colours, applied to the matching --color-* variables. */
   colors: {
@@ -83,6 +101,8 @@ export type SiteSettings = {
   deviceLabels: Record<string, IpLabel>;
   /** IP prefixes (leading octets, e.g. "84.56.12") excluded from analytics. */
   excludedPrefixes: string[];
+  /** Named, trackable share links (?via=<code>). */
+  shareLinks: ShareLink[];
   /** Text content overrides (Phase 2 — present so the shape is stable). */
   content: {
     heroHeadline?: string;
@@ -137,6 +157,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   ipLabels: {},
   deviceLabels: {},
   excludedPrefixes: [],
+  shareLinks: [],
   content: {},
 };
 
@@ -250,6 +271,39 @@ function sanitizePrefixes(input: unknown, fallback: string[]): string[] {
   return Array.from(new Set(out)).slice(0, 200);
 }
 
+/** Codes travel in a URL and are matched verbatim — keep them strictly alphanumeric. */
+const SHARE_CODE_RE = /^[A-Za-z0-9_-]{4,32}$/;
+
+/**
+ * Sanitize the untrusted shareLinks array. Targets are forced to a same-origin
+ * absolute path so a saved link can never be turned into an off-site redirect,
+ * and duplicate codes are dropped (first wins) so attribution stays unambiguous.
+ */
+function sanitizeShareLinks(input: unknown, fallback: ShareLink[]): ShareLink[] {
+  if (!Array.isArray(input)) return fallback;
+  const out: ShareLink[] = [];
+  const seen = new Set<string>();
+  for (const raw of input.slice(0, 200)) {
+    if (!raw || typeof raw !== "object") continue;
+    const r = raw as Record<string, unknown>;
+    const code = typeof r.code === "string" ? r.code.trim() : "";
+    if (!SHARE_CODE_RE.test(code) || seen.has(code)) continue;
+    const name = typeof r.name === "string" ? r.name.trim().slice(0, 80) : "";
+    if (!name) continue;
+    let target = typeof r.target === "string" ? r.target.trim() : "/";
+    // Same-origin paths only: no protocol, no protocol-relative "//host".
+    if (!target.startsWith("/") || target.startsWith("//")) target = "/";
+    target = target.slice(0, 200);
+    const createdAt =
+      typeof r.createdAt === "number" && Number.isFinite(r.createdAt)
+        ? r.createdAt
+        : Date.now();
+    seen.add(code);
+    out.push({ code, name, target, createdAt });
+  }
+  return out;
+}
+
 /**
  * Deep-merge a (partial, untrusted) patch onto a base, whitelisting every key and
  * sanitizing every value. Returns a complete, safe SiteSettings.
@@ -309,6 +363,10 @@ export function mergeSettings(
     excludedPrefixes: sanitizePrefixes(
       "excludedPrefixes" in p ? p.excludedPrefixes : undefined,
       base.excludedPrefixes
+    ),
+    shareLinks: sanitizeShareLinks(
+      "shareLinks" in p ? p.shareLinks : undefined,
+      base.shareLinks
     ),
     content: {
       heroHeadline: optionalText(pco.heroHeadline, 120) ?? base.content.heroHeadline,

@@ -6,6 +6,9 @@ import IpManager, { type IpRow } from "@/components/admin/IpManager";
 import DeviceManager, { type DeviceRow } from "@/components/admin/DeviceManager";
 import ClearLogsButton from "@/components/admin/ClearLogsButton";
 import VisitDetail from "@/components/admin/VisitDetail";
+import ShareLinkManager, { type ShareLinkStat } from "@/components/admin/ShareLinkManager";
+import { siteUrl } from "@/lib/site-config";
+import { projects, cardProjects } from "@/content/projects-index";
 
 export const dynamic = "force-dynamic";
 
@@ -146,6 +149,29 @@ function aggregateDevices(events: AnalyticsEvent[]): DeviceRow[] {
   return [...map.values()].sort((a, b) => b.visits - a.visits);
 }
 
+/**
+ * Per-share-link totals. Counts every event carrying the code — not just the
+ * landing hit — so "visits" reflects how much of the site that person actually
+ * read, and "people" counts distinct devices.
+ */
+function aggregateShareLinks(events: AnalyticsEvent[]): Record<string, ShareLinkStat> {
+  const out: Record<string, ShareLinkStat> = {};
+  const devices: Record<string, Set<string>> = {};
+  for (const e of events) {
+    const code = e.via;
+    if (!code) continue;
+    if (!out[code]) {
+      out[code] = { code, visits: 0, visitors: 0, lastSeen: 0 };
+      devices[code] = new Set();
+    }
+    out[code].visits += 1;
+    if (e.t > out[code].lastSeen) out[code].lastSeen = e.t;
+    if (e.vid) devices[code].add(e.vid);
+  }
+  for (const code of Object.keys(out)) out[code].visitors = devices[code].size;
+  return out;
+}
+
 function StatTile({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="rounded-xl border border-line bg-bg-raised/50 px-4 py-3">
@@ -184,6 +210,22 @@ export default async function AdminAnalyticsPage() {
   const recent = [...events].sort((a, b) => b.t - a.t).slice(0, 60);
   const ipRows = aggregateIps(allEvents);
   const deviceRows = aggregateDevices(allEvents);
+  const shareLinks = settings.shareLinks ?? [];
+  const shareStats = aggregateShareLinks(events);
+  // Resolve a visit's link name from the current settings first, so renaming a
+  // link relabels its past visits too; fall back to the name captured at record
+  // time, which is all a deleted link leaves behind.
+  const viaNameOf = (e: AnalyticsEvent) =>
+    e.via ? shareLinks.find((l) => l.code === e.via)?.name ?? e.viaName : "";
+  const shareTargets = [
+    { href: "/", label: "Home page" },
+    { href: "/projects", label: "All projects" },
+    { href: "/cv", label: "CV" },
+    ...[...projects, ...cardProjects].map((p) => ({
+      href: `/projects/${p.slug}`,
+      label: p.title.length > 46 ? `${p.title.slice(0, 46)}…` : p.title,
+    })),
+  ];
 
   return (
     <div className="space-y-10">
@@ -260,6 +302,7 @@ export default async function AdminAnalyticsPage() {
                   <th className="px-4 py-2.5 font-medium">Company / Network</th>
                   <th className="px-4 py-2.5 font-medium">Location</th>
                   <th className="px-4 py-2.5 font-medium">Page</th>
+                  <th className="px-4 py-2.5 font-medium">Via link</th>
                   <th className="px-4 py-2.5 font-medium" />
                 </tr>
               </thead>
@@ -285,6 +328,15 @@ export default async function AdminAnalyticsPage() {
                       {e.path}
                     </td>
                     <td className="px-4 py-2.5 align-top">
+                      {e.via ? (
+                        <span className="rounded bg-accent/12 px-1.5 py-0.5 text-xs text-accent">
+                          {viaNameOf(e) || e.via}
+                        </span>
+                      ) : (
+                        <span className="text-fg-faint">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 align-top">
                       <VisitDetail
                         details={{
                           browser: e.browser,
@@ -306,6 +358,16 @@ export default async function AdminAnalyticsPage() {
             </table>
           </div>
         )}
+      </section>
+
+      {/* Named, trackable share links */}
+      <section>
+        <ShareLinkManager
+          initialLinks={shareLinks}
+          stats={shareStats}
+          siteUrl={siteUrl}
+          targets={shareTargets}
+        />
       </section>
 
       {/* Device labels + exclusion (survives IP changes / mobile↔WiFi) */}

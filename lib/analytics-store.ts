@@ -38,6 +38,10 @@ export type AnalyticsEvent = {
   os: string;
   /** Parsed from UA server-side. */
   deviceType: "mobile" | "tablet" | "desktop";
+  /** Share-link code the visitor arrived through (?via=...), or "" for organic. */
+  via: string;
+  /** The share link's admin-facing name, resolved server-side at record time. */
+  viaName: string;
   /** Client-reported, all optional (best-effort, never blocks the beacon). */
   screen: string; // e.g. "1920x1080"
   viewport: string; // e.g. "1280x800"
